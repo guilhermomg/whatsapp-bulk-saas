@@ -144,7 +144,15 @@ export const handleWebhookEvent = async (req: Request, res: Response): Promise<v
     }) => {
       entryItem.changes.forEach((change) => {
         const { value: changeValue } = change;
-        const webhookId = `${entryItem.id}-${changeValue.metadata.phone_number_id}-${Date.now()}`;
+        const messageIds =
+          changeValue.messages && changeValue.messages.length > 0
+            ? changeValue.messages.map((message) => message.id).join(',')
+            : 'no-messages';
+        const statusIds =
+          changeValue.statuses && changeValue.statuses.length > 0
+            ? changeValue.statuses.map((status) => status.id).join(',')
+            : 'no-statuses';
+        const webhookId = `${entryItem.id}-${changeValue.metadata.phone_number_id}-${messageIds}-${statusIds}`;
 
         // Check for duplicate webhook (idempotency)
         if (isWebhookProcessed(webhookId)) {
