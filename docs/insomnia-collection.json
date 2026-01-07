@@ -1,0 +1,64 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2024-01-07T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "req_health_check",
+      "parentId": "fld_health",
+      "modified": 1704585600000,
+      "created": 1704585600000,
+      "url": "{{ _.base_url }}/health",
+      "name": "Health Check",
+      "description": "Check API health status",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704585600000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_health",
+      "parentId": "wrk_main",
+      "modified": 1704585600000,
+      "created": 1704585600000,
+      "name": "Health",
+      "description": "Health check endpoints",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704585600000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "wrk_main",
+      "parentId": null,
+      "modified": 1704585600000,
+      "created": 1704585600000,
+      "name": "WhatsApp Bulk SaaS API",
+      "description": "API collection for WhatsApp Bulk SaaS",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "env_main",
+      "parentId": "wrk_main",
+      "modified": 1704585600000,
+      "created": 1704585600000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3000/api/v1"
+      },
+      "dataPropertyOrder": {
+        "&": ["base_url"]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1704585600000,
+      "_type": "environment"
+    }
+  ]
+}
