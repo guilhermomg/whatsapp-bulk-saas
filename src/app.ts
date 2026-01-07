@@ -6,9 +6,11 @@ import swaggerUi from 'swagger-ui-express';
 import config from './config';
 import swaggerSpec from './config/swagger';
 import routes from './routes';
+import webhookRoutes from './routes/webhook.routes';
 import requestId from './middleware/requestId';
 import notFound from './middleware/notFound';
 import errorHandler from './middleware/errorHandler';
+import captureRawBody from './middleware/captureRawBody';
 
 const app: Application = express();
 
@@ -23,7 +25,11 @@ app.use(
   }),
 );
 
-// Body parser middleware
+// Webhook routes need raw body for signature verification
+// Apply captureRawBody middleware before other routes
+app.use('/webhooks', captureRawBody, webhookRoutes);
+
+// Body parser middleware for other routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

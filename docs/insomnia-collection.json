@@ -1,7 +1,7 @@
 {
   "_type": "export",
   "__export_format": 4,
-  "__export_date": "2024-01-07T00:00:00.000Z",
+  "__export_date": "2026-01-07T00:00:00.000Z",
   "__export_source": "insomnia.desktop.app:v2023.5.8",
   "resources": [
     {
@@ -34,6 +34,247 @@
       "_type": "request_group"
     },
     {
+      "_id": "req_whatsapp_status",
+      "parentId": "fld_whatsapp",
+      "modified": 1704585700000,
+      "created": 1704585700000,
+      "url": "{{ _.base_url }}/whatsapp/status",
+      "name": "WhatsApp Status",
+      "description": "Check WhatsApp service connectivity and phone number status",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704585700000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_send_text_message",
+      "parentId": "fld_messages",
+      "modified": 1704585800000,
+      "created": 1704585800000,
+      "url": "{{ _.base_url }}/messages/send",
+      "name": "Send Text Message",
+      "description": "Send a text message via WhatsApp",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"type\": \"text\",\n  \"to\": \"+14155238886\",\n  \"body\": \"Hello from WhatsApp Cloud API! This is a test message.\",\n  \"previewUrl\": false\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704585800000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_send_text_message_with_url",
+      "parentId": "fld_messages",
+      "modified": 1704585900000,
+      "created": 1704585900000,
+      "url": "{{ _.base_url }}/messages/send",
+      "name": "Send Text Message with URL Preview",
+      "description": "Send a text message with URL preview enabled",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"type\": \"text\",\n  \"to\": \"+14155238886\",\n  \"body\": \"Check out this link: https://www.example.com\",\n  \"previewUrl\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704585900000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_send_template_message",
+      "parentId": "fld_messages",
+      "modified": 1704586000000,
+      "created": 1704586000000,
+      "url": "{{ _.base_url }}/messages/send",
+      "name": "Send Template Message (Simple)",
+      "description": "Send a template message without parameters",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"type\": \"template\",\n  \"to\": \"+14155238886\",\n  \"templateName\": \"hello_world\",\n  \"languageCode\": \"en_US\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586000000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_send_template_message_with_params",
+      "parentId": "fld_messages",
+      "modified": 1704586100000,
+      "created": 1704586100000,
+      "url": "{{ _.base_url }}/messages/send",
+      "name": "Send Template Message (With Parameters)",
+      "description": "Send a template message with dynamic parameters",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"type\": \"template\",\n  \"to\": \"+14155238886\",\n  \"templateName\": \"order_confirmation\",\n  \"languageCode\": \"en_US\",\n  \"components\": [\n    {\n      \"type\": \"body\",\n      \"parameters\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"John Doe\"\n        },\n        {\n          \"type\": \"text\",\n          \"text\": \"#12345\"\n        },\n        {\n          \"type\": \"text\",\n          \"text\": \"$99.99\"\n        }\n      ]\n    }\n  ]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586100000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_messages",
+      "parentId": "wrk_main",
+      "modified": 1704585800000,
+      "created": 1704585800000,
+      "name": "Messages",
+      "description": "Message sending endpoints",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704585800000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_whatsapp",
+      "parentId": "wrk_main",
+      "modified": 1704585700000,
+      "created": 1704585700000,
+      "name": "WhatsApp",
+      "description": "WhatsApp service management",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704585700000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_webhook_verification",
+      "parentId": "fld_webhooks",
+      "modified": 1704586200000,
+      "created": 1704586200000,
+      "url": "{{ _.webhook_base_url }}/webhooks/whatsapp",
+      "name": "Webhook Verification",
+      "description": "Simulate WhatsApp webhook verification",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "hub.mode",
+          "value": "subscribe"
+        },
+        {
+          "name": "hub.verify_token",
+          "value": "your_webhook_verification_token"
+        },
+        {
+          "name": "hub.challenge",
+          "value": "test_challenge_12345"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704586200000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_webhook_message_status",
+      "parentId": "fld_webhooks",
+      "modified": 1704586300000,
+      "created": 1704586300000,
+      "url": "{{ _.webhook_base_url }}/webhooks/whatsapp",
+      "name": "Webhook - Message Status Update",
+      "description": "Example webhook payload for message status update",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"object\": \"whatsapp_business_account\",\n  \"entry\": [\n    {\n      \"id\": \"WHATSAPP_BUSINESS_ACCOUNT_ID\",\n      \"changes\": [\n        {\n          \"value\": {\n            \"messaging_product\": \"whatsapp\",\n            \"metadata\": {\n              \"display_phone_number\": \"15550100\",\n              \"phone_number_id\": \"PHONE_NUMBER_ID\"\n            },\n            \"statuses\": [\n              {\n                \"id\": \"wamid.HBgLMTY1MDUwNzY1OTAVAgARGBI5QTNDQTVCM0Q0Q0Q2RTY3RTcA\",\n                \"status\": \"delivered\",\n                \"timestamp\": \"1234567890\",\n                \"recipient_id\": \"16505076590\",\n                \"conversation\": {\n                  \"id\": \"CONVERSATION_ID\",\n                  \"origin\": {\n                    \"type\": \"business_initiated\"\n                  }\n                },\n                \"pricing\": {\n                  \"billable\": true,\n                  \"pricing_model\": \"CBP\",\n                  \"category\": \"business_initiated\"\n                }\n              }\n            ]\n          },\n          \"field\": \"messages\"\n        }\n      ]\n    }\n  ]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "X-Hub-Signature-256",
+          "value": "sha256=YOUR_SIGNATURE_HERE"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586300000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_webhook_incoming_message",
+      "parentId": "fld_webhooks",
+      "modified": 1704586400000,
+      "created": 1704586400000,
+      "url": "{{ _.webhook_base_url }}/webhooks/whatsapp",
+      "name": "Webhook - Incoming Message",
+      "description": "Example webhook payload for incoming message",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"object\": \"whatsapp_business_account\",\n  \"entry\": [\n    {\n      \"id\": \"WHATSAPP_BUSINESS_ACCOUNT_ID\",\n      \"changes\": [\n        {\n          \"value\": {\n            \"messaging_product\": \"whatsapp\",\n            \"metadata\": {\n              \"display_phone_number\": \"15550100\",\n              \"phone_number_id\": \"PHONE_NUMBER_ID\"\n            },\n            \"contacts\": [\n              {\n                \"profile\": {\n                  \"name\": \"John Doe\"\n                },\n                \"wa_id\": \"16505076590\"\n              }\n            ],\n            \"messages\": [\n              {\n                \"from\": \"16505076590\",\n                \"id\": \"wamid.HBgLMTY1MDUwNzY1OTAVAgARGBI5QTNDQTVCM0Q0Q0Q2RTY3RTcA\",\n                \"timestamp\": \"1234567890\",\n                \"type\": \"text\",\n                \"text\": {\n                  \"body\": \"STOP\"\n                }\n              }\n            ]\n          },\n          \"field\": \"messages\"\n        }\n      ]\n    }\n  ]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "X-Hub-Signature-256",
+          "value": "sha256=YOUR_SIGNATURE_HERE"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586400000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_webhooks",
+      "parentId": "wrk_main",
+      "modified": 1704586200000,
+      "created": 1704586200000,
+      "name": "Webhooks",
+      "description": "Webhook testing endpoints",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704586200000,
+      "_type": "request_group"
+    },
+    {
       "_id": "wrk_main",
       "parentId": null,
       "modified": 1704585600000,
@@ -50,10 +291,11 @@
       "created": 1704585600000,
       "name": "Base Environment",
       "data": {
-        "base_url": "http://localhost:3000/api/v1"
+        "base_url": "http://localhost:3000/api/v1",
+        "webhook_base_url": "http://localhost:3000"
       },
       "dataPropertyOrder": {
-        "&": ["base_url"]
+        "&": ["base_url", "webhook_base_url"]
       },
       "color": null,
       "isPrivate": false,
