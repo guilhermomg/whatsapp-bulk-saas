@@ -26,10 +26,20 @@ export const verifyWebhookSignature = (signature: string, body: string): boolean
   const calculatedSignature = hmac.digest('hex');
 
   // Constant-time comparison to prevent timing attacks
-  return crypto.timingSafeEqual(
-    Buffer.from(calculatedSignature, 'hex'),
-    Buffer.from(expectedSignature, 'hex'),
-  );
+  // Ensure buffers are valid and of equal length to avoid RangeError
+  try {
+    const calculatedBuffer = Buffer.from(calculatedSignature, 'hex');
+    const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+
+    if (calculatedBuffer.length !== expectedBuffer.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(calculatedBuffer, expectedBuffer);
+  } catch {
+    // In case of invalid hex or other errors, treat signature as invalid
+    return false;
+  }
 };
 
 /**
