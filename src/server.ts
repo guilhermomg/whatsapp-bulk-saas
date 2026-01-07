@@ -2,6 +2,7 @@ import { Server } from 'http';
 import app from './app';
 import config from './config';
 import logger from './config/logger';
+import validateEnvironment from './utils/validateEnvironment';
 
 interface ServerModule {
   server: Server | undefined;
@@ -11,11 +12,17 @@ interface ServerModule {
 const serverModule: ServerModule = {
   server: undefined,
   startServer: () => {
+    // Validate environment configuration before starting
+    validateEnvironment();
+
     serverModule.server = app.listen(config.port, () => {
       logger.info(`Server running in ${config.env} mode on port ${config.port}`);
       logger.info(`API Documentation available at http://${config.host}:${config.port}/api-docs`);
       logger.info(
         `Health check available at http://${config.host}:${config.port}${config.api.prefix}/${config.api.version}/health`,
+      );
+      logger.info(
+        `WhatsApp webhook available at http://${config.host}:${config.port}/webhooks/whatsapp`,
       );
     });
   },
