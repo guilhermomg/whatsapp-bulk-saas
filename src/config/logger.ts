@@ -1,5 +1,5 @@
-const winston = require('winston');
-const config = require('./index');
+import winston from 'winston';
+import config from './index';
 
 const levels = {
   error: 0,
@@ -9,7 +9,7 @@ const levels = {
   debug: 4,
 };
 
-const level = () => {
+const level = (): string => {
   const env = config.env || 'development';
   const isDevelopment = env === 'development';
   return isDevelopment ? 'debug' : 'warn';
@@ -49,4 +49,4 @@ const logger = winston.createLogger({
   transports,
 });
 
-module.exports = logger;
+export default logger;

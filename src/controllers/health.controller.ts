@@ -1,5 +1,6 @@
-const os = require('os');
-const config = require('../config');
+import { Request, Response } from 'express';
+import os from 'os';
+import config from '../config';
 
 /**
  * @swagger
@@ -41,7 +42,7 @@ const config = require('../config');
  *                       type: string
  *                       example: 1.0.0
  */
-const getHealth = async (req, res) => {
+const getHealth = async (_req: Request, res: Response): Promise<void> => {
   const healthcheck = {
     success: true,
     message: 'API is running',
@@ -62,6 +63,4 @@ const getHealth = async (req, res) => {
   res.status(200).json(healthcheck);
 };
 
-module.exports = {
-  getHealth,
-};
+export default getHealth;

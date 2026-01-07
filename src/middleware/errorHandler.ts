@@ -1,8 +1,21 @@
-const logger = require('../config/logger');
-const { AppError } = require('../utils/errors');
+import { Request, Response, NextFunction } from 'express';
+import logger from '../config/logger';
+import { AppError } from '../utils/errors';
 
-const errorHandler = (err, req, res, next) => {
-  let error = { ...err };
+interface ErrorWithCode extends Error {
+  code?: number;
+  isJoi?: boolean;
+  details?: Array<{ message: string }>;
+  errors?: Record<string, { message: string }>;
+}
+
+const errorHandler = (
+  err: ErrorWithCode,
+  req: Request,
+  res: Response,
+  _next: NextFunction,
+): void => {
+  let error: AppError | ErrorWithCode = { ...err };
   error.message = err.message;
 
   // Log error
@@ -21,7 +34,7 @@ const errorHandler = (err, req, res, next) => {
   }
 
   // Mongoose validation error
-  if (err.name === 'ValidationError') {
+  if (err.name === 'ValidationError' && err.errors) {
     const message = Object.values(err.errors)
       .map((val) => val.message)
       .join(', ');
@@ -29,12 +42,13 @@ const errorHandler = (err, req, res, next) => {
   }
 
   // Joi validation error
-  if (err.isJoi) {
+  if (err.isJoi && err.details) {
     const message = err.details.map((detail) => detail.message).join(', ');
     error = new AppError(message, 400);
   }
 
-  res.status(error.statusCode || 500).json({
+  const statusCode = (error as AppError).statusCode || 500;
+  res.status(statusCode).json({
     success: false,
     error: error.message || 'Server Error',
     requestId: req.id,
@@ -42,4 +56,4 @@ const errorHandler = (err, req, res, next) => {
   });
 };
 
-module.exports = errorHandler;
+export default errorHandler;

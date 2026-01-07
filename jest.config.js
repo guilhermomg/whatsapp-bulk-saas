@@ -1,10 +1,11 @@
 module.exports = {
+  preset: 'ts-jest',
   testEnvironment: 'node',
   coverageDirectory: 'coverage',
   collectCoverageFrom: [
-    'src/**/*.js',
-    '!src/app.js',
-    '!src/server.js',
+    'src/**/*.ts',
+    '!src/app.ts',
+    '!src/server.ts',
     '!**/node_modules/**',
   ],
   coverageThreshold: {
@@ -15,10 +16,11 @@ module.exports = {
       statements: 70,
     },
   },
-  testMatch: ['**/tests/**/*.test.js'],
+  testMatch: ['**/tests/**/*.test.ts'],
   verbose: true,
   forceExit: true,
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
 };

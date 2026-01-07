@@ -1,16 +1,16 @@
-const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
-const compression = require('compression');
-const swaggerUi = require('swagger-ui-express');
-const config = require('./config');
-const swaggerSpec = require('./config/swagger');
-const routes = require('./routes');
-const requestId = require('./middleware/requestId');
-const notFound = require('./middleware/notFound');
-const errorHandler = require('./middleware/errorHandler');
+import express, { Application } from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import compression from 'compression';
+import swaggerUi from 'swagger-ui-express';
+import config from './config';
+import swaggerSpec from './config/swagger';
+import routes from './routes';
+import requestId from './middleware/requestId';
+import notFound from './middleware/notFound';
+import errorHandler from './middleware/errorHandler';
 
-const app = express();
+const app: Application = express();
 
 // Security middleware
 app.use(helmet());
@@ -45,4 +45,4 @@ app.use(notFound);
 // Error handler
 app.use(errorHandler);
 
-module.exports = app;
+export default app;

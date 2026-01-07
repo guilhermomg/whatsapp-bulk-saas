@@ -5,6 +5,7 @@ WhatsApp bulk messaging micro SaaS with compliant Cloud API integration. Node.js
 ## Features
 
 - 🚀 Production-ready Node.js backend with Express
+- 💙 TypeScript for type safety and better developer experience
 - 🏗️ Clean architecture with separation of concerns
 - 🔒 Security best practices (Helmet, CORS)
 - 📝 Comprehensive logging with Winston
@@ -16,13 +17,14 @@ WhatsApp bulk messaging micro SaaS with compliant Cloud API integration. Node.js
 
 ## Tech Stack
 
+- **Language**: TypeScript 5.x
 - **Runtime**: Node.js >= 18.0.0
 - **Framework**: Express 5.x
 - **Validation**: Joi
 - **Logging**: Winston
 - **Documentation**: Swagger (OpenAPI 3.0)
-- **Testing**: Jest + Supertest
-- **Code Quality**: ESLint + Prettier (Airbnb style guide)
+- **Testing**: Jest + Supertest + ts-jest
+- **Code Quality**: ESLint + Prettier (Airbnb TypeScript style guide)
 
 ## Getting Started
 
@@ -51,6 +53,11 @@ cp .env.example .env
 
 4. Update the `.env` file with your configuration.
 
+5. Build the TypeScript code:
+```bash
+npm run build
+```
+
 ### Running the Application
 
 #### Development Mode
@@ -60,6 +67,7 @@ npm run dev
 
 #### Production Mode
 ```bash
+npm run build
 npm start
 ```
 
@@ -85,23 +93,24 @@ http://localhost:3000/api/v1/health
 whatsapp-bulk-saas/
 ├── src/
 │   ├── config/          # Configuration files
-│   │   ├── index.js     # Main configuration
-│   │   ├── logger.js    # Winston logger setup
-│   │   └── swagger.js   # Swagger/OpenAPI configuration
+│   │   ├── index.ts     # Main configuration
+│   │   ├── logger.ts    # Winston logger setup
+│   │   └── swagger.ts   # Swagger/OpenAPI configuration
 │   ├── controllers/     # Route controllers (application layer)
 │   ├── services/        # Business logic layer
 │   ├── repositories/    # Data access layer
 │   ├── models/          # Data models/schemas
 │   ├── middleware/      # Express middleware
-│   │   ├── errorHandler.js  # Global error handler
-│   │   ├── notFound.js      # 404 handler
-│   │   └── requestId.js     # Request ID for tracing
+│   │   ├── errorHandler.ts  # Global error handler
+│   │   ├── notFound.ts      # 404 handler
+│   │   └── requestId.ts     # Request ID for tracing
 │   ├── routes/          # API route definitions
 │   ├── utils/           # Helper functions
-│   │   └── errors.js    # Custom error classes
+│   │   └── errors.ts    # Custom error classes
 │   ├── validators/      # Input validation schemas
-│   ├── app.js           # Express app setup
-│   └── server.js        # Server entry point
+│   ├── app.ts           # Express app setup
+│   └── server.ts        # Server entry point
+├── dist/                # Compiled JavaScript (generated)
 ├── tests/
 │   ├── unit/           # Unit tests
 │   ├── integration/    # Integration tests
@@ -109,6 +118,8 @@ whatsapp-bulk-saas/
 ├── docs/
 │   └── insomnia-collection.json  # Insomnia API collection
 ├── logs/               # Application logs (auto-generated)
+├── tsconfig.json       # TypeScript configuration
+├── tsconfig.eslint.json # TypeScript config for ESLint
 ├── .env.example        # Environment variables template
 ├── .eslintrc.json     # ESLint configuration
 ├── .prettierrc        # Prettier configuration
@@ -121,6 +132,7 @@ whatsapp-bulk-saas/
 
 | Script | Description |
 |--------|-------------|
+| `npm run build` | Compile TypeScript to JavaScript |
 | `npm start` | Start production server |
 | `npm run dev` | Start development server with auto-reload |
 | `npm test` | Run all tests |
