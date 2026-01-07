@@ -10,6 +10,7 @@ import webhookRoutes from './routes/webhook.routes';
 import requestId from './middleware/requestId';
 import notFound from './middleware/notFound';
 import errorHandler from './middleware/errorHandler';
+import captureRawBody from './middleware/captureRawBody';
 
 const app: Application = express();
 
@@ -24,7 +25,11 @@ app.use(
   }),
 );
 
-// Body parser middleware
+// Webhook routes need raw body for signature verification
+// Apply captureRawBody middleware before other routes
+app.use('/webhooks', captureRawBody, webhookRoutes);
+
+// Body parser middleware for other routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -36,9 +41,6 @@ app.use(requestId);
 
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-// Webhook routes (must be at root level for WhatsApp)
-app.use('/webhooks', webhookRoutes);
 
 // API routes
 app.use(`${config.api.prefix}/${config.api.version}`, routes);

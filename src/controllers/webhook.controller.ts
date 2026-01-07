@@ -103,7 +103,8 @@ export const handleWebhookEvent = async (req: Request, res: Response): Promise<v
   try {
     // Verify webhook signature
     const signature = req.headers['x-hub-signature-256'] as string;
-    const rawBody = JSON.stringify(req.body);
+    // Use the raw body captured by captureRawBody middleware
+    const rawBody = (req as Request & { rawBody?: string }).rawBody || JSON.stringify(req.body);
 
     if (!verifyWebhookSignature(signature, rawBody)) {
       logger.warn('Webhook signature verification failed', {
@@ -144,14 +145,12 @@ export const handleWebhookEvent = async (req: Request, res: Response): Promise<v
     }) => {
       entryItem.changes.forEach((change) => {
         const { value: changeValue } = change;
-        const messageIds =
-          changeValue.messages && changeValue.messages.length > 0
-            ? changeValue.messages.map((message) => message.id).join(',')
-            : 'no-messages';
-        const statusIds =
-          changeValue.statuses && changeValue.statuses.length > 0
-            ? changeValue.statuses.map((status) => status.id).join(',')
-            : 'no-statuses';
+        const messageIds = changeValue.messages && changeValue.messages.length > 0
+          ? changeValue.messages.map((message) => message.id).join(',')
+          : 'no-messages';
+        const statusIds = changeValue.statuses && changeValue.statuses.length > 0
+          ? changeValue.statuses.map((status) => status.id).join(',')
+          : 'no-statuses';
         const webhookId = `${entryItem.id}-${changeValue.metadata.phone_number_id}-${messageIds}-${statusIds}`;
 
         // Check for duplicate webhook (idempotency)
