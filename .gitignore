@@ -22,6 +22,9 @@ lib-cov
 coverage
 *.lcov
 
+# Test files compiled by ts-jest
+tests/**/*.js
+
 # nyc test coverage
 .nyc_output
 
