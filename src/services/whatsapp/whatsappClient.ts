@@ -180,7 +180,8 @@ class WhatsAppClient {
         type?: string;
       };
     };
-    const errorMessage = errorData.error?.message || 'Unknown WhatsApp API error';
+    const errorMessage = errorData.error?.message
+      || 'Unknown WhatsApp API error';
     const errorCode = errorData.error?.code?.toString();
 
     // Map WhatsApp error codes to custom errors
@@ -215,9 +216,9 @@ class WhatsAppClient {
     } catch (error) {
       // Don't retry on authentication errors or invalid recipient errors
       if (
-        error instanceof WhatsAppAuthError ||
-        error instanceof WhatsAppInvalidRecipientError ||
-        error instanceof WhatsAppTemplateError
+        error instanceof WhatsAppAuthError
+        || error instanceof WhatsAppInvalidRecipientError
+        || error instanceof WhatsAppTemplateError
       ) {
         throw error;
       }

@@ -8,11 +8,15 @@ export const sendTextMessageSchema = Joi.object({
       'string.pattern.base': 'Phone number must be in E.164 format (e.g., +14155238886)',
       'any.required': 'Recipient phone number is required',
     }),
-  body: Joi.string().min(1).max(4096).required().messages({
-    'string.min': 'Message body cannot be empty',
-    'string.max': 'Message body cannot exceed 4096 characters',
-    'any.required': 'Message body is required',
-  }),
+  body: Joi.string()
+    .min(1)
+    .max(4096)
+    .required()
+    .messages({
+      'string.min': 'Message body cannot be empty',
+      'string.max': 'Message body cannot exceed 4096 characters',
+      'any.required': 'Message body is required',
+    }),
   previewUrl: Joi.boolean().optional(),
 });
 

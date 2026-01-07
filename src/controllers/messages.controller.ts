@@ -75,69 +75,64 @@ const whatsappClient = new WhatsAppClient();
  *         description: Rate limit exceeded
  */
 export const sendMessage = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { type } = req.body;
+  const { type } = req.body;
 
-    if (type === 'text') {
-      // Validate text message payload
-      const { error, value } = sendTextMessageSchema.validate(req.body);
+  if (type === 'text') {
+    // Validate text message payload
+    const { error, value } = sendTextMessageSchema.validate(req.body);
 
-      if (error) {
-        throw new ValidationError(`Invalid text message: ${error.message}`);
-      }
-
-      logger.info('Sending text message', {
-        to: value.to.slice(-4), // Only log last 4 digits for privacy
-      });
-
-      const result = await whatsappClient.sendTextMessage({
-        to: value.to,
-        body: value.body,
-        previewUrl: value.previewUrl,
-      });
-
-      res.status(200).json({
-        success: true,
-        message: 'Text message sent successfully',
-        data: {
-          messageId: result.messages[0].id,
-          waId: result.contacts[0].wa_id,
-        },
-      });
-    } else if (type === 'template') {
-      // Validate template message payload
-      const { error, value } = sendTemplateMessageSchema.validate(req.body);
-
-      if (error) {
-        throw new ValidationError(`Invalid template message: ${error.message}`);
-      }
-
-      logger.info('Sending template message', {
-        to: value.to.slice(-4), // Only log last 4 digits for privacy
-        template: value.templateName,
-      });
-
-      const result = await whatsappClient.sendTemplateMessage({
-        to: value.to,
-        templateName: value.templateName,
-        languageCode: value.languageCode,
-        components: value.components,
-      });
-
-      res.status(200).json({
-        success: true,
-        message: 'Template message sent successfully',
-        data: {
-          messageId: result.messages[0].id,
-          waId: result.contacts[0].wa_id,
-        },
-      });
-    } else {
-      throw new ValidationError('Invalid message type. Must be "text" or "template"');
+    if (error) {
+      throw new ValidationError(`Invalid text message: ${error.message}`);
     }
-  } catch (error) {
-    // Re-throw custom errors to be handled by error middleware
-    throw error;
+
+    logger.info('Sending text message', {
+      to: value.to.slice(-4), // Only log last 4 digits for privacy
+    });
+
+    const result = await whatsappClient.sendTextMessage({
+      to: value.to,
+      body: value.body,
+      previewUrl: value.previewUrl,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Text message sent successfully',
+      data: {
+        messageId: result.messages[0].id,
+        waId: result.contacts[0].wa_id,
+      },
+    });
+  } else if (type === 'template') {
+    // Validate template message payload
+    const { error, value } = sendTemplateMessageSchema.validate(req.body);
+
+    if (error) {
+      throw new ValidationError(`Invalid template message: ${error.message}`);
+    }
+
+    logger.info('Sending template message', {
+      to: value.to.slice(-4), // Only log last 4 digits for privacy
+      template: value.templateName,
+    });
+
+    const result = await whatsappClient.sendTemplateMessage({
+      to: value.to,
+      templateName: value.templateName,
+      languageCode: value.languageCode,
+      components: value.components,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Template message sent successfully',
+      data: {
+        messageId: result.messages[0].id,
+        waId: result.contacts[0].wa_id,
+      },
+    });
+  } else {
+    throw new ValidationError('Invalid message type. Must be "text" or "template"');
   }
 };
 

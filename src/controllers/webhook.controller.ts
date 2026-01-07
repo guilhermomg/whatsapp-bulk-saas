@@ -109,7 +109,9 @@ export const handleWebhookEvent = async (req: Request, res: Response): Promise<v
       logger.warn('Webhook signature verification failed', {
         signature: signature ? 'provided' : 'missing',
       });
-      throw new UnauthorizedError('Invalid webhook signature');
+      // Return 200 to avoid WhatsApp retrying, but log as error
+      res.status(200).json({ success: false, error: 'Invalid signature' });
+      return;
     }
 
     // Validate webhook payload
@@ -117,7 +119,9 @@ export const handleWebhookEvent = async (req: Request, res: Response): Promise<v
 
     if (error) {
       logger.warn('Invalid webhook payload', { error: error.message });
-      throw new BadRequestError(`Invalid webhook payload: ${error.message}`);
+      // Return 200 to avoid WhatsApp retrying
+      res.status(200).json({ success: false, error: 'Invalid payload' });
+      return;
     }
 
     // Process each entry in the webhook
@@ -139,8 +143,8 @@ export const handleWebhookEvent = async (req: Request, res: Response): Promise<v
       }>;
     }) => {
       entryItem.changes.forEach((change) => {
-        const { value } = change;
-        const webhookId = `${entryItem.id}-${value.metadata.phone_number_id}-${Date.now()}`;
+        const { value: changeValue } = change;
+        const webhookId = `${entryItem.id}-${changeValue.metadata.phone_number_id}-${Date.now()}`;
 
         // Check for duplicate webhook (idempotency)
         if (isWebhookProcessed(webhookId)) {
@@ -151,8 +155,8 @@ export const handleWebhookEvent = async (req: Request, res: Response): Promise<v
         markWebhookAsProcessed(webhookId);
 
         // Handle message status updates
-        if (value.statuses && value.statuses.length > 0) {
-          value.statuses.forEach((status) => {
+        if (changeValue.statuses && changeValue.statuses.length > 0) {
+          changeValue.statuses.forEach((status) => {
             logger.info('Message status update received', {
               messageId: status.id,
               status: status.status,
@@ -166,8 +170,8 @@ export const handleWebhookEvent = async (req: Request, res: Response): Promise<v
         }
 
         // Handle incoming messages
-        if (value.messages && value.messages.length > 0) {
-          value.messages.forEach((message) => {
+        if (changeValue.messages && changeValue.messages.length > 0) {
+          changeValue.messages.forEach((message) => {
             logger.info('Incoming message received', {
               messageId: message.id,
               from: message.from,
@@ -185,10 +189,8 @@ export const handleWebhookEvent = async (req: Request, res: Response): Promise<v
     // WhatsApp requires a 200 response within 20 seconds
     res.status(200).json({ success: true });
   } catch (error) {
-    if (error instanceof BadRequestError || error instanceof UnauthorizedError) {
-      throw error;
-    }
     logger.error('Webhook event handling error', { error });
-    res.status(200).json({ success: false }); // Still return 200 to avoid retries
+    // Still return 200 to avoid retries from WhatsApp
+    res.status(200).json({ success: false });
   }
 };

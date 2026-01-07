@@ -1,3 +1,5 @@
+/* eslint-disable max-classes-per-file */
+// Multiple error classes are grouped here for consistency and ease of maintenance
 export class AppError extends Error {
   public statusCode: number;
 
@@ -57,7 +59,6 @@ export class InternalServerError extends AppError {
   }
 }
 
-// WhatsApp-specific error classes
 export class WhatsAppError extends AppError {
   public code?: string;
 
