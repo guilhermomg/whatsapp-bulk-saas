@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import WhatsAppClient from '../../src/services/whatsapp/whatsappClient';
 
 interface MessageResponse {
   messaging_product: string;
