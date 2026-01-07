@@ -6,6 +6,7 @@ import swaggerUi from 'swagger-ui-express';
 import config from './config';
 import swaggerSpec from './config/swagger';
 import routes from './routes';
+import webhookRoutes from './routes/webhook.routes';
 import requestId from './middleware/requestId';
 import notFound from './middleware/notFound';
 import errorHandler from './middleware/errorHandler';
@@ -35,6 +36,9 @@ app.use(requestId);
 
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Webhook routes (must be at root level for WhatsApp)
+app.use('/webhooks', webhookRoutes);
 
 // API routes
 app.use(`${config.api.prefix}/${config.api.version}`, routes);

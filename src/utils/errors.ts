@@ -56,3 +56,40 @@ export class InternalServerError extends AppError {
     super(message, 500);
   }
 }
+
+// WhatsApp-specific error classes
+export class WhatsAppError extends AppError {
+  public code?: string;
+
+  public errorData?: unknown;
+
+  constructor(message: string, statusCode: number = 500, code?: string, errorData?: unknown) {
+    super(message, statusCode);
+    this.code = code;
+    this.errorData = errorData;
+  }
+}
+
+export class WhatsAppAuthError extends WhatsAppError {
+  constructor(message: string = 'WhatsApp authentication failed', code?: string) {
+    super(message, 401, code);
+  }
+}
+
+export class WhatsAppRateLimitError extends WhatsAppError {
+  constructor(message: string = 'WhatsApp rate limit exceeded', code?: string) {
+    super(message, 429, code);
+  }
+}
+
+export class WhatsAppTemplateError extends WhatsAppError {
+  constructor(message: string = 'WhatsApp template error', code?: string) {
+    super(message, 400, code);
+  }
+}
+
+export class WhatsAppInvalidRecipientError extends WhatsAppError {
+  constructor(message: string = 'Invalid recipient phone number', code?: string) {
+    super(message, 400, code);
+  }
+}
