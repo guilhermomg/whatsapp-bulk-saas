@@ -77,6 +77,9 @@ const whatsappClient = new WhatsAppClient();
 export const sendMessage = async (req: Request, res: Response): Promise<void> => {
   const { type } = req.body;
 
+  if (typeof type !== 'string') {
+    throw new ValidationError('Invalid message type. Must be "text" or "template"');
+  }
   if (type === 'text') {
     // Validate text message payload
     const { error, value } = sendTextMessageSchema.validate(req.body);
