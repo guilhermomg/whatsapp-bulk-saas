@@ -1,13 +1,12 @@
 import dotenv from 'dotenv';
 
+dotenv.config();
+
 import { Server } from 'http';
 import app from './app';
 import config from './config';
 import logger from './config/logger';
 import validateEnvironment from './utils/validateEnvironment';
-
-dotenv.config();
-
 interface ServerModule {
   server: Server | undefined;
   startServer: () => void;
