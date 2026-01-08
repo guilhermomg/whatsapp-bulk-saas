@@ -15,7 +15,7 @@ import {
   bulkUntag,
   importCsv,
   exportCsv,
-} from '../controllers/contactController';
+} from '../controllers/contact.controller';
 
 const router = express.Router();
 
