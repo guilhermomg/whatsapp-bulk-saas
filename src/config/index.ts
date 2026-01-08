@@ -15,6 +15,12 @@ interface Config {
     rateLimitWindowMs: number;
     rateLimitMaxRequests: number;
   };
+  database: {
+    url: string;
+    poolMin: number;
+    poolMax: number;
+  };
+  encryptionKey: string;
 }
 
 const config: Config = {
@@ -34,6 +40,12 @@ const config: Config = {
     rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
     rateLimitMaxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10),
   },
+  database: {
+    url: process.env.DATABASE_URL || '',
+    poolMin: parseInt(process.env.DATABASE_POOL_MIN || '2', 10),
+    poolMax: parseInt(process.env.DATABASE_POOL_MAX || '10', 10),
+  },
+  encryptionKey: process.env.ENCRYPTION_KEY || '',
 };
 
 export default config;
