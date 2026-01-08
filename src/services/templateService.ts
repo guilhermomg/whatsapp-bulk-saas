@@ -9,6 +9,7 @@ import {
   BadRequestError,
   WhatsAppError,
 } from '../utils/errors';
+import { TEMPLATE_LIMITS } from '../constants/templateConstants';
 import logger from '../config/logger';
 
 interface TemplateComponents {
@@ -144,33 +145,33 @@ export class TemplateService {
     this.validateVariableSequence(bodyVariables);
 
     // Ensure body text doesn't exceed WhatsApp limit
-    if (components.body.text.length > 1024) {
-      throw new ValidationError('Template body text must not exceed 1024 characters');
+    if (components.body.text.length > TEMPLATE_LIMITS.BODY_MAX_LENGTH) {
+      throw new ValidationError(`Template body text must not exceed ${TEMPLATE_LIMITS.BODY_MAX_LENGTH} characters`);
     }
 
     // Validate header if present
     if (components.header?.text) {
-      if (components.header.text.length > 60) {
-        throw new ValidationError('Header text must not exceed 60 characters');
+      if (components.header.text.length > TEMPLATE_LIMITS.HEADER_TEXT_MAX_LENGTH) {
+        throw new ValidationError(`Header text must not exceed ${TEMPLATE_LIMITS.HEADER_TEXT_MAX_LENGTH} characters`);
       }
     }
 
     // Validate footer if present
     if (components.footer?.text) {
-      if (components.footer.text.length > 60) {
-        throw new ValidationError('Footer text must not exceed 60 characters');
+      if (components.footer.text.length > TEMPLATE_LIMITS.FOOTER_MAX_LENGTH) {
+        throw new ValidationError(`Footer text must not exceed ${TEMPLATE_LIMITS.FOOTER_MAX_LENGTH} characters`);
       }
     }
 
     // Validate buttons if present
     if (components.buttons) {
-      if (components.buttons.length > 3) {
-        throw new ValidationError('Maximum 3 buttons allowed per template');
+      if (components.buttons.length > TEMPLATE_LIMITS.MAX_BUTTONS) {
+        throw new ValidationError(`Maximum ${TEMPLATE_LIMITS.MAX_BUTTONS} buttons allowed per template`);
       }
 
       components.buttons.forEach((button, index) => {
-        if (button.text.length > 25) {
-          throw new ValidationError(`Button ${index + 1} text must not exceed 25 characters`);
+        if (button.text.length > TEMPLATE_LIMITS.BUTTON_TEXT_MAX_LENGTH) {
+          throw new ValidationError(`Button ${index + 1} text must not exceed ${TEMPLATE_LIMITS.BUTTON_TEXT_MAX_LENGTH} characters`);
         }
       });
     }
@@ -454,7 +455,7 @@ export class TemplateService {
     const bodyVariables = this.extractVariables(components.body.text);
     if (expectedParams.length !== bodyVariables.length) {
       errors.push(
-        `Expected ${bodyVariables.length} parameters, but template defines ${expectedParams.length}`,
+        `Template expects ${bodyVariables.length} parameters, but variables array defines ${expectedParams.length}`,
       );
     }
 
@@ -565,8 +566,9 @@ export class TemplateService {
     //
     // For now, return empty array as this requires proper Meta API credentials
     // and is typically mocked in tests
-    logger.info(`Fetching templates from Meta API for WABA ${wabaId}`);
+    logger.warn(`Meta API integration not fully implemented. Returning empty template list for WABA ${wabaId}`);
 
+    // TODO: Implement actual Meta API call when credentials are configured
     // This would be replaced with actual API call
     // const response = await axios.get(
     //   `https://graph.facebook.com/v18.0/${wabaId}/message_templates`,

@@ -1,22 +1,16 @@
 import Joi from 'joi';
+import { SUPPORTED_LANGUAGE_CODES, TEMPLATE_LIMITS } from '../constants/templateConstants';
 
 /**
  * Joi schemas for template validation
  */
-
-// Valid language codes (ISO 639-1 with locale)
-const languageCodes = [
-  'en_US', 'en_GB', 'es_ES', 'es_MX', 'pt_BR', 'pt_PT',
-  'fr_FR', 'de_DE', 'it_IT', 'nl_NL', 'ru_RU', 'ar_AR',
-  'hi_IN', 'id_ID', 'ja_JP', 'ko_KR', 'zh_CN', 'zh_TW',
-];
 
 // Template component schemas
 const headerComponentSchema = Joi.object({
   type: Joi.string().valid('text', 'image', 'video', 'document').required(),
   text: Joi.when('type', {
     is: 'text',
-    then: Joi.string().max(60).required(),
+    then: Joi.string().max(TEMPLATE_LIMITS.HEADER_TEXT_MAX_LENGTH).required(),
     otherwise: Joi.forbidden(),
   }),
   url: Joi.when('type', {
@@ -27,17 +21,17 @@ const headerComponentSchema = Joi.object({
 });
 
 const bodyComponentSchema = Joi.object({
-  text: Joi.string().max(1024).required(),
+  text: Joi.string().max(TEMPLATE_LIMITS.BODY_MAX_LENGTH).required(),
   variables: Joi.array().items(Joi.string().min(1).max(100)).optional().default([]),
 });
 
 const footerComponentSchema = Joi.object({
-  text: Joi.string().max(60).required(),
+  text: Joi.string().max(TEMPLATE_LIMITS.FOOTER_MAX_LENGTH).required(),
 });
 
 const buttonComponentSchema = Joi.object({
   type: Joi.string().valid('url', 'phone', 'quick_reply').required(),
-  text: Joi.string().max(25).required(),
+  text: Joi.string().max(TEMPLATE_LIMITS.BUTTON_TEXT_MAX_LENGTH).required(),
   url: Joi.when('type', {
     is: 'url',
     then: Joi.string().uri().required(),
@@ -54,7 +48,7 @@ const componentsSchema = Joi.object({
   header: headerComponentSchema.optional(),
   body: bodyComponentSchema.required(),
   footer: footerComponentSchema.optional(),
-  buttons: Joi.array().items(buttonComponentSchema).max(3).optional(),
+  buttons: Joi.array().items(buttonComponentSchema).max(TEMPLATE_LIMITS.MAX_BUTTONS).optional(),
 });
 
 // Schema for creating a template
@@ -63,18 +57,18 @@ export const createTemplateSchema = Joi.object({
   name: Joi.string()
     .pattern(/^[a-z0-9_]+$/)
     .min(1)
-    .max(512)
+    .max(TEMPLATE_LIMITS.NAME_MAX_LENGTH)
     .required()
     .messages({
       'string.pattern.base': 'Template name must contain only lowercase letters, numbers, and underscores',
       'any.required': 'Template name is required',
     }),
   language: Joi.string()
-    .valid(...languageCodes)
+    .valid(...SUPPORTED_LANGUAGE_CODES)
     .optional()
     .default('en_US')
     .messages({
-      'any.only': `Language must be one of: ${languageCodes.join(', ')}`,
+      'any.only': `Language must be one of: ${SUPPORTED_LANGUAGE_CODES.join(', ')}`,
     }),
   category: Joi.string()
     .valid('marketing', 'utility', 'authentication')
@@ -91,16 +85,16 @@ export const updateTemplateSchema = Joi.object({
   name: Joi.string()
     .pattern(/^[a-z0-9_]+$/)
     .min(1)
-    .max(512)
+    .max(TEMPLATE_LIMITS.NAME_MAX_LENGTH)
     .optional()
     .messages({
       'string.pattern.base': 'Template name must contain only lowercase letters, numbers, and underscores',
     }),
   language: Joi.string()
-    .valid(...languageCodes)
+    .valid(...SUPPORTED_LANGUAGE_CODES)
     .optional()
     .messages({
-      'any.only': `Language must be one of: ${languageCodes.join(', ')}`,
+      'any.only': `Language must be one of: ${SUPPORTED_LANGUAGE_CODES.join(', ')}`,
     }),
   category: Joi.string()
     .valid('marketing', 'utility', 'authentication')
