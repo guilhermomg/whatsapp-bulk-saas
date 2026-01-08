@@ -68,8 +68,9 @@ export function validatePhoneNumber(
     const e164 = phoneNumberObj.format('E.164');
 
     // Check if it's a mobile number
-    const isMobile = phoneNumberObj.getType() === 'MOBILE'
-                     || phoneNumberObj.getType() === 'FIXED_LINE_OR_MOBILE';
+    const phoneType = phoneNumberObj.getType();
+    const isMobile = phoneType === 'MOBILE'
+                     || phoneType === 'FIXED_LINE_OR_MOBILE';
 
     return {
       isValid: true,

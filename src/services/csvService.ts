@@ -172,7 +172,7 @@ export class CsvService {
               result.duplicates += 1;
               result.failed += 1;
               result.errors.push({
-                row: rows.indexOf(row) + 2, // +2 for header and 0-index
+                row: batch.indexOf(row) + rows.indexOf(batch[0]) + 2, // Calculate actual row
                 phone: row.phone,
                 error: 'Duplicate phone number',
               });
@@ -199,7 +199,7 @@ export class CsvService {
           } catch (error) {
             result.failed += 1;
             result.errors.push({
-              row: rows.indexOf(row) + 2, // +2 for header and 0-index
+              row: batch.indexOf(row) + rows.indexOf(batch[0]) + 2, // Calculate actual row
               phone: row.phone,
               error: error instanceof Error ? error.message : 'Import error',
             });

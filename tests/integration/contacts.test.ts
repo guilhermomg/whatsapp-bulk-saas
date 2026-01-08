@@ -159,9 +159,15 @@ describe('Contacts API', () => {
       // Create multiple contacts
       await prisma.contact.createMany({
         data: [
-          createContactData({ userId: testUserId, phone: '+14155552671', name: 'Alice', tags: ['vip'] }),
-          createContactData({ userId: testUserId, phone: '+14155552672', name: 'Bob', tags: ['customer'] }),
-          createContactData({ userId: testUserId, phone: '+14155552673', name: 'Charlie', optedIn: false }),
+          createContactData({
+            userId: testUserId, phone: '+14155552671', name: 'Alice', tags: ['vip'],
+          }),
+          createContactData({
+            userId: testUserId, phone: '+14155552672', name: 'Bob', tags: ['customer'],
+          }),
+          createContactData({
+            userId: testUserId, phone: '+14155552673', name: 'Charlie', optedIn: false,
+          }),
         ],
       });
     });

@@ -972,12 +972,16 @@ export async function exportCsv(req: Request, res: Response): Promise<void> {
       parsedTags = tags.split(',').map((tag) => tag.trim());
     }
 
+    // Parse boolean strings safely
+    const parsedOptedIn = optedIn !== undefined ? optedIn === 'true' : undefined;
+    const parsedIsBlocked = isBlocked !== undefined ? isBlocked === 'true' : undefined;
+
     const csvStream = await csvService.exportCsv({
       userId,
-      optedIn: optedIn === 'true',
+      optedIn: parsedOptedIn,
       tags: parsedTags,
       search,
-      isBlocked: isBlocked === 'true',
+      isBlocked: parsedIsBlocked,
     });
 
     res.setHeader('Content-Type', 'text/csv');
