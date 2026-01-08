@@ -1,4 +1,3 @@
-import { User, SubscriptionTier } from '@prisma/client';
 import { encrypt } from '../../src/utils/encryption';
 
 let userCounter = 0;
@@ -10,7 +9,7 @@ export interface CreateUserOptions {
   phoneNumberId?: string;
   accessToken?: string;
   webhookVerifyToken?: string;
-  subscriptionTier?: SubscriptionTier;
+  subscriptionTier?: 'free' | 'basic' | 'pro';
   isActive?: boolean;
 }
 
@@ -18,18 +17,18 @@ export interface CreateUserOptions {
  * Factory for creating test User data
  */
 export function createUserData(options: CreateUserOptions = {}): any {
-  userCounter++;
-  
+  userCounter += 1;
+
   return {
     email: options.email || `test${userCounter}@example.com`,
     businessName: options.businessName || `Test Business ${userCounter}`,
     wabaId: options.wabaId || `waba_${userCounter}`,
     phoneNumberId: options.phoneNumberId || `phone_${userCounter}`,
-    accessToken: options.accessToken 
-      ? encrypt(options.accessToken) 
+    accessToken: options.accessToken
+      ? encrypt(options.accessToken)
       : encrypt(`test_token_${userCounter}`),
-    webhookVerifyToken: options.webhookVerifyToken 
-      ? encrypt(options.webhookVerifyToken) 
+    webhookVerifyToken: options.webhookVerifyToken
+      ? encrypt(options.webhookVerifyToken)
       : encrypt(`webhook_token_${userCounter}`),
     subscriptionTier: options.subscriptionTier || 'free',
     isActive: options.isActive !== undefined ? options.isActive : true,

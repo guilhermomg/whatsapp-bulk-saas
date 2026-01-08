@@ -91,9 +91,11 @@ describe('UserRepository', () => {
     });
 
     it('should support pagination', async () => {
-      for (let i = 0; i < 5; i++) {
-        await userRepository.create(createUserData());
+      const createPromises = [];
+      for (let i = 0; i < 5; i += 1) {
+        createPromises.push(userRepository.create(createUserData()));
       }
+      await Promise.all(createPromises);
 
       const users = await userRepository.findAll({ skip: 2, take: 2 });
 
@@ -181,7 +183,7 @@ describe('UserRepository', () => {
       const activeUsers = await userRepository.findActiveUsers();
 
       expect(activeUsers).toHaveLength(2);
-      activeUsers.forEach(user => {
+      activeUsers.forEach((user) => {
         expect(user.isActive).toBe(true);
       });
     });

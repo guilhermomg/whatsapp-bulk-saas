@@ -4,7 +4,6 @@ import config from '../config';
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
 const SALT_LENGTH = 64;
-const TAG_LENGTH = 16;
 const KEY_LENGTH = 32;
 
 /**
@@ -15,12 +14,12 @@ function getEncryptionKey(): Buffer {
   if (!key) {
     throw new Error('ENCRYPTION_KEY environment variable is not set');
   }
-  
+
   // If key is already 32 bytes in hex format
   if (key.length === 64) {
     return Buffer.from(key, 'hex');
   }
-  
+
   // Otherwise derive key using PBKDF2
   const salt = crypto.randomBytes(SALT_LENGTH);
   return crypto.pbkdf2Sync(key, salt, 100000, KEY_LENGTH, 'sha512');

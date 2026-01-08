@@ -56,7 +56,7 @@ export class CampaignRepository extends BaseRepository<Campaign> {
       skip?: number;
       take?: number;
       status?: CampaignStatus;
-    }
+    },
   ): Promise<Campaign[]> {
     const where: Prisma.CampaignWhereInput = { userId };
 
@@ -86,7 +86,7 @@ export class CampaignRepository extends BaseRepository<Campaign> {
   async updateStatus(
     id: string,
     status: CampaignStatus,
-    errorMessage?: string
+    errorMessage?: string,
   ): Promise<Campaign> {
     const data: Prisma.CampaignUpdateInput = { status };
 
@@ -113,7 +113,7 @@ export class CampaignRepository extends BaseRepository<Campaign> {
       deliveredCount?: number;
       failedCount?: number;
       readCount?: number;
-    }
+    },
   ): Promise<Campaign> {
     return this.prisma.campaign.update({
       where: { id },

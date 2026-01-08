@@ -18,8 +18,8 @@ export interface CreateContactOptions {
  * Factory for creating test Contact data
  */
 export function createContactData(options: CreateContactOptions): any {
-  contactCounter++;
-  
+  contactCounter += 1;
+
   return {
     userId: options.userId,
     phone: options.phone || `+141555501${String(contactCounter).padStart(2, '0')}`,

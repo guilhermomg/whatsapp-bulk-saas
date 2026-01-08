@@ -38,7 +38,7 @@ export class UserRepository extends BaseRepository<User> {
       orderBy: options?.orderBy,
     });
 
-    return users.map(user => this.decryptSensitiveFields(user));
+    return users.map((user) => this.decryptSensitiveFields(user));
   }
 
   async create(data: Prisma.UserCreateInput): Promise<User> {
@@ -77,7 +77,7 @@ export class UserRepository extends BaseRepository<User> {
       where: { isActive: true },
     });
 
-    return users.map(user => this.decryptSensitiveFields(user));
+    return users.map((user) => this.decryptSensitiveFields(user));
   }
 
   /**
@@ -103,8 +103,12 @@ export class UserRepository extends BaseRepository<User> {
   private decryptSensitiveFields(user: User): User {
     return {
       ...user,
-      accessToken: user.accessToken ? decrypt(user.accessToken) : user.accessToken,
-      webhookVerifyToken: user.webhookVerifyToken ? decrypt(user.webhookVerifyToken) : user.webhookVerifyToken,
+      accessToken: user.accessToken
+        ? decrypt(user.accessToken)
+        : user.accessToken,
+      webhookVerifyToken: user.webhookVerifyToken
+        ? decrypt(user.webhookVerifyToken)
+        : user.webhookVerifyToken,
     };
   }
 }

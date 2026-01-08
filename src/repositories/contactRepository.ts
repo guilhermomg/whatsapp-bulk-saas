@@ -66,7 +66,7 @@ export class ContactRepository extends BaseRepository<Contact> {
       take?: number;
       optedIn?: boolean;
       tags?: string[];
-    }
+    },
   ): Promise<Contact[]> {
     const where: Prisma.ContactWhereInput = { userId };
 
@@ -107,7 +107,7 @@ export class ContactRepository extends BaseRepository<Contact> {
 
   async updateOptInStatus(
     id: string,
-    optedIn: boolean
+    optedIn: boolean,
   ): Promise<Contact> {
     return this.prisma.contact.update({
       where: { id },

@@ -13,13 +13,13 @@ interface HealthCheckResult {
  */
 export async function checkDatabaseHealth(): Promise<HealthCheckResult> {
   const startTime = Date.now();
-  
+
   try {
     // Simple query to check database connectivity
     await prisma.$queryRaw`SELECT 1`;
-    
+
     const latency = Date.now() - startTime;
-    
+
     return {
       healthy: true,
       message: 'Database connection successful',
@@ -28,7 +28,7 @@ export async function checkDatabaseHealth(): Promise<HealthCheckResult> {
     };
   } catch (error) {
     logger.error('Database health check failed', error);
-    
+
     return {
       healthy: false,
       message: error instanceof Error ? error.message : 'Database connection failed',

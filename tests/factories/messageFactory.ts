@@ -16,8 +16,8 @@ export interface CreateMessageOptions {
  * Factory for creating test Message data
  */
 export function createMessageData(options: CreateMessageOptions): any {
-  messageCounter++;
-  
+  messageCounter += 1;
+
   return {
     userId: options.userId,
     contactId: options.contactId,

@@ -14,8 +14,8 @@ export interface CreateTemplateOptions {
  * Factory for creating test Template data
  */
 export function createTemplateData(options: CreateTemplateOptions): any {
-  templateCounter++;
-  
+  templateCounter += 1;
+
   return {
     userId: options.userId,
     name: options.name || `test_template_${templateCounter}`,

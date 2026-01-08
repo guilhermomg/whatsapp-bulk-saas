@@ -55,7 +55,7 @@ export class WebhookEventRepository extends BaseRepository<WebhookEvent> {
       skip?: number;
       take?: number;
       processed?: boolean;
-    }
+    },
   ): Promise<WebhookEvent[]> {
     const where: Prisma.WebhookEventWhereInput = { eventType };
 
@@ -115,7 +115,7 @@ export class WebhookEventRepository extends BaseRepository<WebhookEvent> {
       take?: number;
       eventType?: string;
       processed?: boolean;
-    }
+    },
   ): Promise<WebhookEvent[]> {
     const where: Prisma.WebhookEventWhereInput = { userId };
 

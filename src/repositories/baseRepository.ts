@@ -5,6 +5,7 @@ import prisma from '../utils/prisma';
  * Base Repository class providing common CRUD operations
  * All specific repositories should extend this class
  */
+// eslint-disable-next-line import/prefer-default-export
 export abstract class BaseRepository<T> {
   protected prisma: PrismaClient;
 

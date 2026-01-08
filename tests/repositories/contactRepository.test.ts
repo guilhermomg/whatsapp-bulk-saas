@@ -1,7 +1,9 @@
 import { ContactRepository } from '../../src/repositories/contactRepository';
 import { UserRepository } from '../../src/repositories/userRepository';
 import { setupTestDatabase } from '../utils/testDb';
-import { createUserData, createContactData, resetUserCounter, resetContactCounter } from '../factories';
+import {
+  createUserData, createContactData, resetUserCounter, resetContactCounter,
+} from '../factories';
 
 describe('ContactRepository', () => {
   setupTestDatabase();
@@ -78,7 +80,7 @@ describe('ContactRepository', () => {
 
       // Attempting to create duplicate should fail
       await expect(
-        contactRepository.create(contactData)
+        contactRepository.create(contactData),
       ).rejects.toThrow();
     });
   });
@@ -107,10 +109,10 @@ describe('ContactRepository', () => {
 
     it('should filter by tags', async () => {
       await contactRepository.create(
-        createContactData({ userId: testUserId, tags: ['customer', 'vip'] })
+        createContactData({ userId: testUserId, tags: ['customer', 'vip'] }),
       );
       await contactRepository.create(
-        createContactData({ userId: testUserId, tags: ['prospect'] })
+        createContactData({ userId: testUserId, tags: ['prospect'] }),
       );
 
       const vipContacts = await contactRepository.findByUserId(testUserId, {
@@ -125,13 +127,13 @@ describe('ContactRepository', () => {
   describe('findOptedInContacts', () => {
     it('should find only opted-in, non-blocked contacts', async () => {
       await contactRepository.create(
-        createContactData({ userId: testUserId, optedIn: true, isBlocked: false })
+        createContactData({ userId: testUserId, optedIn: true, isBlocked: false }),
       );
       await contactRepository.create(
-        createContactData({ userId: testUserId, optedIn: false, isBlocked: false })
+        createContactData({ userId: testUserId, optedIn: false, isBlocked: false }),
       );
       await contactRepository.create(
-        createContactData({ userId: testUserId, optedIn: true, isBlocked: true })
+        createContactData({ userId: testUserId, optedIn: true, isBlocked: true }),
       );
 
       const contacts = await contactRepository.findOptedInContacts(testUserId);
@@ -145,7 +147,7 @@ describe('ContactRepository', () => {
   describe('updateOptInStatus', () => {
     it('should update opt-in status and timestamp', async () => {
       const contact = await contactRepository.create(
-        createContactData({ userId: testUserId, optedIn: false })
+        createContactData({ userId: testUserId, optedIn: false }),
       );
 
       const updated = await contactRepository.updateOptInStatus(contact.id, true);
@@ -157,7 +159,7 @@ describe('ContactRepository', () => {
 
     it('should update opt-out status and timestamp', async () => {
       const contact = await contactRepository.create(
-        createContactData({ userId: testUserId, optedIn: true })
+        createContactData({ userId: testUserId, optedIn: true }),
       );
 
       const updated = await contactRepository.updateOptInStatus(contact.id, false);
@@ -171,7 +173,7 @@ describe('ContactRepository', () => {
   describe('blockContact', () => {
     it('should block a contact with reason', async () => {
       const contact = await contactRepository.create(
-        createContactData({ userId: testUserId })
+        createContactData({ userId: testUserId }),
       );
 
       const blocked = await contactRepository.blockContact(contact.id, 'Spam complaints');
@@ -184,7 +186,7 @@ describe('ContactRepository', () => {
   describe('unblockContact', () => {
     it('should unblock a contact', async () => {
       const contact = await contactRepository.create(
-        createContactData({ userId: testUserId, isBlocked: true })
+        createContactData({ userId: testUserId, isBlocked: true }),
       );
 
       const unblocked = await contactRepository.unblockContact(contact.id);

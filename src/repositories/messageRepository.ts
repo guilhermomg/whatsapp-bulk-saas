@@ -63,7 +63,7 @@ export class MessageRepository extends BaseRepository<Message> {
       skip?: number;
       take?: number;
       status?: MessageStatus;
-    }
+    },
   ): Promise<Message[]> {
     const where: Prisma.MessageWhereInput = { campaignId };
 
@@ -84,7 +84,7 @@ export class MessageRepository extends BaseRepository<Message> {
     options?: {
       skip?: number;
       take?: number;
-    }
+    },
   ): Promise<Message[]> {
     return this.prisma.message.findMany({
       where: { contactId },
@@ -100,7 +100,7 @@ export class MessageRepository extends BaseRepository<Message> {
       skip?: number;
       take?: number;
       status?: MessageStatus;
-    }
+    },
   ): Promise<Message[]> {
     const where: Prisma.MessageWhereInput = { userId };
 
@@ -120,7 +120,7 @@ export class MessageRepository extends BaseRepository<Message> {
     id: string,
     status: MessageStatus,
     errorCode?: string,
-    errorMessage?: string
+    errorMessage?: string,
   ): Promise<Message> {
     const data: Prisma.MessageUpdateInput = { status };
 
@@ -146,7 +146,7 @@ export class MessageRepository extends BaseRepository<Message> {
     whatsappMessageId: string,
     status: MessageStatus,
     errorCode?: string,
-    errorMessage?: string
+    errorMessage?: string,
   ): Promise<Message | null> {
     const message = await this.findByWhatsAppMessageId(whatsappMessageId);
     if (!message) return null;
@@ -179,7 +179,7 @@ export class MessageRepository extends BaseRepository<Message> {
     options?: {
       maxRetries?: number;
       limit?: number;
-    }
+    },
   ): Promise<Message[]> {
     const where: Prisma.MessageWhereInput = {
       status: 'failed',
@@ -223,7 +223,9 @@ export class MessageRepository extends BaseRepository<Message> {
       this.prisma.message.count({ where: { campaignId, status: 'failed' } }),
     ]);
 
-    return { total, queued, sent, delivered, read, failed };
+    return {
+      total, queued, sent, delivered, read, failed,
+    };
   }
 }
 

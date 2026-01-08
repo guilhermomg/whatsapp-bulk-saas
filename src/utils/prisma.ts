@@ -16,18 +16,11 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-const prismaClientSingleton = () => {
-  return new PrismaClient({
-    log: config.env === 'development' 
-      ? ['query', 'error', 'warn']
-      : ['error'],
-    datasources: {
-      db: {
-        url: config.database.url,
-      },
-    },
-  });
-};
+const prismaClientSingleton = () => new PrismaClient({
+  log: config.env === 'development'
+    ? ['query', 'error', 'warn']
+    : ['error'],
+});
 
 const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
 

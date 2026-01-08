@@ -66,7 +66,7 @@ export class TemplateRepository extends BaseRepository<Template> {
       skip?: number;
       take?: number;
       status?: TemplateStatus;
-    }
+    },
   ): Promise<Template[]> {
     const where: Prisma.TemplateWhereInput = { userId };
 
@@ -94,7 +94,7 @@ export class TemplateRepository extends BaseRepository<Template> {
   async updateStatus(
     id: string,
     status: TemplateStatus,
-    rejectionReason?: string
+    rejectionReason?: string,
   ): Promise<Template> {
     const data: Prisma.TemplateUpdateInput = {
       status,
@@ -115,7 +115,7 @@ export class TemplateRepository extends BaseRepository<Template> {
 
   async linkWhatsAppTemplate(
     id: string,
-    whatsappTemplateId: string
+    whatsappTemplateId: string,
   ): Promise<Template> {
     return this.prisma.template.update({
       where: { id },

@@ -16,8 +16,8 @@ export interface CreateCampaignOptions {
  * Factory for creating test Campaign data
  */
 export function createCampaignData(options: CreateCampaignOptions): any {
-  campaignCounter++;
-  
+  campaignCounter += 1;
+
   return {
     userId: options.userId,
     name: options.name || `Test Campaign ${campaignCounter}`,
