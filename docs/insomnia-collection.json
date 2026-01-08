@@ -285,6 +285,423 @@
       "_type": "workspace"
     },
     {
+      "_id": "fld_contacts",
+      "parentId": "wrk_main",
+      "modified": 1704586500000,
+      "created": 1704586500000,
+      "name": "Contacts",
+      "description": "Contact management endpoints",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704586500000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_create_contact",
+      "parentId": "fld_contacts",
+      "modified": 1704586501000,
+      "created": 1704586501000,
+      "url": "{{ _.base_url }}/contacts?userId={{ _.user_id }}",
+      "name": "Create Contact",
+      "description": "Create a new contact",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"userId\": \"{{ _.user_id }}\",\n  \"phone\": \"+14155551234\",\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"optInStatus\": \"opted_in\",\n  \"tags\": [\"customer\", \"premium\"],\n  \"metadata\": {\n    \"source\": \"website\",\n    \"campaign\": \"summer-2026\"\n  }\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586501000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_list_contacts",
+      "parentId": "fld_contacts",
+      "modified": 1704586502000,
+      "created": 1704586502000,
+      "url": "{{ _.base_url }}/contacts",
+      "name": "List Contacts",
+      "description": "List all contacts with filtering and pagination",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "userId",
+          "value": "{{ _.user_id }}"
+        },
+        {
+          "name": "limit",
+          "value": "10",
+          "disabled": true
+        },
+        {
+          "name": "offset",
+          "value": "0",
+          "disabled": true
+        },
+        {
+          "name": "optedIn",
+          "value": "true",
+          "disabled": true
+        },
+        {
+          "name": "tags",
+          "value": "customer,premium",
+          "disabled": true
+        },
+        {
+          "name": "search",
+          "value": "john",
+          "disabled": true
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704586502000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_get_contact",
+      "parentId": "fld_contacts",
+      "modified": 1704586503000,
+      "created": 1704586503000,
+      "url": "{{ _.base_url }}/contacts/{{ _.contact_id }}",
+      "name": "Get Contact by ID",
+      "description": "Get a specific contact by ID",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "userId",
+          "value": "{{ _.user_id }}"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704586503000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_update_contact",
+      "parentId": "fld_contacts",
+      "modified": 1704586504000,
+      "created": 1704586504000,
+      "url": "{{ _.base_url }}/contacts/{{ _.contact_id }}?userId={{ _.user_id }}",
+      "name": "Update Contact",
+      "description": "Update an existing contact",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"John Doe Updated\",\n  \"email\": \"john.updated@example.com\",\n  \"metadata\": {\n    \"tier\": \"gold\"\n  }\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586504000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_delete_contact",
+      "parentId": "fld_contacts",
+      "modified": 1704586505000,
+      "created": 1704586505000,
+      "url": "{{ _.base_url }}/contacts/{{ _.contact_id }}?userId={{ _.user_id }}",
+      "name": "Delete Contact",
+      "description": "Delete a contact",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704586505000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_opt_in_contact",
+      "parentId": "fld_contacts",
+      "modified": 1704586506000,
+      "created": 1704586506000,
+      "url": "{{ _.base_url }}/contacts/{{ _.contact_id }}/opt-in?userId={{ _.user_id }}",
+      "name": "Opt-In Contact",
+      "description": "Opt-in a contact for messaging",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"source\": \"manual\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586506000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_opt_out_contact",
+      "parentId": "fld_contacts",
+      "modified": 1704586507000,
+      "created": 1704586507000,
+      "url": "{{ _.base_url }}/contacts/{{ _.contact_id }}/opt-out?userId={{ _.user_id }}",
+      "name": "Opt-Out Contact",
+      "description": "Opt-out a contact from messaging",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"reason\": \"User requested\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586507000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_bulk_opt_in",
+      "parentId": "fld_contacts",
+      "modified": 1704586508000,
+      "created": 1704586508000,
+      "url": "{{ _.base_url }}/contacts/bulk-opt-in?userId={{ _.user_id }}",
+      "name": "Bulk Opt-In",
+      "description": "Opt-in multiple contacts at once",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"contactIds\": [\n    \"contact-id-1\",\n    \"contact-id-2\",\n    \"contact-id-3\"\n  ],\n  \"source\": \"manual\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586508000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_bulk_opt_out",
+      "parentId": "fld_contacts",
+      "modified": 1704586509000,
+      "created": 1704586509000,
+      "url": "{{ _.base_url }}/contacts/bulk-opt-out?userId={{ _.user_id }}",
+      "name": "Bulk Opt-Out",
+      "description": "Opt-out multiple contacts at once",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"contactIds\": [\n    \"contact-id-1\",\n    \"contact-id-2\"\n  ],\n  \"reason\": \"Campaign ended\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586509000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_update_contact_tags",
+      "parentId": "fld_contacts",
+      "modified": 1704586510000,
+      "created": 1704586510000,
+      "url": "{{ _.base_url }}/contacts/{{ _.contact_id }}/tags?userId={{ _.user_id }}",
+      "name": "Update Contact Tags",
+      "description": "Update tags for a contact",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tags\": [\"vip\", \"customer\", \"newsletter\"]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586510000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_bulk_tag",
+      "parentId": "fld_contacts",
+      "modified": 1704586511000,
+      "created": 1704586511000,
+      "url": "{{ _.base_url }}/contacts/bulk-tag?userId={{ _.user_id }}",
+      "name": "Bulk Tag Contacts",
+      "description": "Add tags to multiple contacts",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"contactIds\": [\n    \"contact-id-1\",\n    \"contact-id-2\"\n  ],\n  \"tags\": [\"campaign-2026\", \"promo\"]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586511000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_bulk_untag",
+      "parentId": "fld_contacts",
+      "modified": 1704586512000,
+      "created": 1704586512000,
+      "url": "{{ _.base_url }}/contacts/bulk-untag?userId={{ _.user_id }}",
+      "name": "Bulk Untag Contacts",
+      "description": "Remove tags from multiple contacts",
+      "method": "DELETE",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"contactIds\": [\n    \"contact-id-1\",\n    \"contact-id-2\"\n  ],\n  \"tags\": [\"old-campaign\"]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586512000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_import_csv",
+      "parentId": "fld_contacts",
+      "modified": 1704586513000,
+      "created": 1704586513000,
+      "url": "{{ _.base_url }}/contacts/import-csv?userId={{ _.user_id }}",
+      "name": "Import Contacts from CSV",
+      "description": "Import contacts from a CSV file",
+      "method": "POST",
+      "body": {
+        "mimeType": "multipart/form-data",
+        "params": [
+          {
+            "name": "file",
+            "value": "",
+            "description": "CSV file with columns: phone, name, email, tags (comma-separated)",
+            "type": "file",
+            "fileName": "contacts.csv"
+          }
+        ]
+      },
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704586513000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_export_csv",
+      "parentId": "fld_contacts",
+      "modified": 1704586514000,
+      "created": 1704586514000,
+      "url": "{{ _.base_url }}/contacts/export-csv",
+      "name": "Export Contacts to CSV",
+      "description": "Export contacts to a CSV file",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "userId",
+          "value": "{{ _.user_id }}"
+        },
+        {
+          "name": "optedIn",
+          "value": "true",
+          "disabled": true
+        },
+        {
+          "name": "tags",
+          "value": "customer",
+          "disabled": true
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704586514000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_tags",
+      "parentId": "wrk_main",
+      "modified": 1704586600000,
+      "created": 1704586600000,
+      "name": "Tags",
+      "description": "Tag management endpoints",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704586600000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_get_all_tags",
+      "parentId": "fld_tags",
+      "modified": 1704586601000,
+      "created": 1704586601000,
+      "url": "{{ _.base_url }}/tags",
+      "name": "Get All Tags",
+      "description": "Get all tags with contact counts",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "userId",
+          "value": "{{ _.user_id }}"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704586601000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
       "_id": "env_main",
       "parentId": "wrk_main",
       "modified": 1704585600000,
@@ -292,10 +709,17 @@
       "name": "Base Environment",
       "data": {
         "base_url": "http://localhost:3000/api/v1",
-        "webhook_base_url": "http://localhost:3000"
+        "webhook_base_url": "http://localhost:3000",
+        "user_id": "2affbffe-a504-4649-866f-8e19528b7602",
+        "contact_id": "PUT_CONTACT_ID_HERE"
       },
       "dataPropertyOrder": {
-        "&": ["base_url", "webhook_base_url"]
+        "&": [
+          "base_url",
+          "webhook_base_url",
+          "user_id",
+          "contact_id"
+        ]
       },
       "color": null,
       "isPrivate": false,
