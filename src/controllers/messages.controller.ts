@@ -4,7 +4,14 @@ import WhatsAppClient from '../services/whatsapp/whatsappClient';
 import { sendTextMessageSchema, sendTemplateMessageSchema } from '../validators/whatsapp.validator';
 import { ValidationError } from '../utils/errors';
 
-const whatsappClient = new WhatsAppClient();
+let whatsappClient: WhatsAppClient;
+
+const getWhatsAppClient = (): WhatsAppClient => {
+  if (!whatsappClient) {
+    whatsappClient = new WhatsAppClient();
+  }
+  return whatsappClient;
+};
 
 /**
  * @swagger
@@ -92,7 +99,7 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
       to: value.to.slice(-4), // Only log last 4 digits for privacy
     });
 
-    const result = await whatsappClient.sendTextMessage({
+    const result = await getWhatsAppClient().sendTextMessage({
       to: value.to,
       body: value.body,
       previewUrl: value.previewUrl,
@@ -119,7 +126,7 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
       template: value.templateName,
     });
 
-    const result = await whatsappClient.sendTemplateMessage({
+    const result = await getWhatsAppClient().sendTemplateMessage({
       to: value.to,
       templateName: value.templateName,
       languageCode: value.languageCode,
@@ -172,7 +179,7 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
  */
 export const getWhatsAppStatus = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const isConnected = await whatsappClient.checkConnectivity();
+    const isConnected = await getWhatsAppClient().checkConnectivity();
 
     if (!isConnected) {
       res.status(503).json({
@@ -185,7 +192,7 @@ export const getWhatsAppStatus = async (_req: Request, res: Response): Promise<v
       return;
     }
 
-    const phoneNumberInfo = await whatsappClient.getPhoneNumberInfo();
+    const phoneNumberInfo = await getWhatsAppClient().getPhoneNumberInfo();
 
     res.status(200).json({
       success: true,

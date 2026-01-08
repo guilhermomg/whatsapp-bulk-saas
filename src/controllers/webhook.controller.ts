@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import logger from '../config/logger';
-import whatsappConfig from '../config/whatsapp';
+import getWhatsAppConfig from '../config/whatsapp';
 import { BadRequestError, UnauthorizedError } from '../utils/errors';
 import {
   verifyWebhookSignature,
@@ -50,6 +50,8 @@ import {
  */
 export const verifyWebhook = async (req: Request, res: Response): Promise<void> => {
   try {
+    const whatsappConfig = getWhatsAppConfig();
+    logger.info('Received webhook verification request', { query: req.query });
     // Validate query parameters
     const { error, value } = webhookVerificationSchema.validate(req.query);
 
