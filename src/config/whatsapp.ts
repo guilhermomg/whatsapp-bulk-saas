@@ -1,7 +1,3 @@
-import dotenv from 'dotenv';
-
-dotenv.config();
-
 interface WhatsAppConfig {
   apiVersion: string;
   phoneNumberId: string;
@@ -18,20 +14,30 @@ interface WhatsAppConfig {
   };
 }
 
-const whatsappConfig: WhatsAppConfig = {
-  apiVersion: process.env.WHATSAPP_API_VERSION || 'v18.0',
-  phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
-  businessAccountId: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '',
-  accessToken: process.env.WHATSAPP_ACCESS_TOKEN || '',
-  webhookVerifyToken: process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || '',
-  appSecret: process.env.WHATSAPP_APP_SECRET || '',
-  baseUrl: `https://graph.facebook.com/${process.env.WHATSAPP_API_VERSION || 'v18.0'}`,
-  timeout: 30000, // 30 seconds
-  retryAttempts: 5,
-  retryDelays: [1000, 2000, 4000, 8000, 16000], // Exponential backoff: 1s, 2s, 4s, 8s, 16s
-  rateLimit: {
-    requestsPerSecond: 80, // WhatsApp rate limit: 80 requests/second per phone number
-  },
+let cachedConfig: WhatsAppConfig | null = null;
+
+const getWhatsAppConfig = (): WhatsAppConfig => {
+  if (cachedConfig) {
+    return cachedConfig;
+  }
+
+  cachedConfig = {
+    apiVersion: process.env.WHATSAPP_API_VERSION || 'v18.0',
+    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
+    businessAccountId: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '',
+    accessToken: process.env.WHATSAPP_ACCESS_TOKEN || '',
+    webhookVerifyToken: process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || '',
+    appSecret: process.env.WHATSAPP_APP_SECRET || '',
+    baseUrl: `https://graph.facebook.com/${process.env.WHATSAPP_API_VERSION || 'v18.0'}`,
+    timeout: 30000, // 30 seconds
+    retryAttempts: 5,
+    retryDelays: [1000, 2000, 4000, 8000, 16000], // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+    rateLimit: {
+      requestsPerSecond: 80, // WhatsApp rate limit: 80 requests/second per phone number
+    },
+  };
+
+  return cachedConfig;
 };
 
 /**
@@ -39,6 +45,7 @@ const whatsappConfig: WhatsAppConfig = {
  * @throws {Error} If any required configuration is missing
  */
 export const validateWhatsAppConfig = (): void => {
+  const whatsappConfig = getWhatsAppConfig();
   const requiredFields = [
     'phoneNumberId',
     'businessAccountId',
@@ -58,4 +65,4 @@ export const validateWhatsAppConfig = (): void => {
   }
 };
 
-export default whatsappConfig;
+export default getWhatsAppConfig;

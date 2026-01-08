@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import whatsappConfig from '../config/whatsapp';
+import getWhatsAppConfig from '../config/whatsapp';
 
 /**
  * Verify webhook signature from WhatsApp
@@ -19,6 +19,7 @@ export const verifyWebhookSignature = (signature: string, body: string): boolean
   }
 
   const expectedSignature = signatureParts[1];
+  const whatsappConfig = getWhatsAppConfig();
 
   // Calculate HMAC using app secret
   const hmac = crypto.createHmac('sha256', whatsappConfig.appSecret);

@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import logger from '../../config/logger';
-import whatsappConfig from '../../config/whatsapp';
+import getWhatsAppConfig from '../../config/whatsapp';
 import {
   WhatsAppError,
   WhatsAppAuthError,
@@ -64,15 +64,29 @@ class WhatsAppClient {
 
   private phoneNumberId: string;
 
+  private whatsappConfig: any;
+
   constructor() {
-    this.phoneNumberId = whatsappConfig.phoneNumberId;
+    this.whatsappConfig = getWhatsAppConfig();
+    this.phoneNumberId = this.whatsappConfig.phoneNumberId;
+
+    // Debug logging to verify config is loaded (token value is never logged)
+    logger.info('WhatsApp Client Configuration', {
+      phoneNumberId: this.whatsappConfig.phoneNumberId,
+      businessAccountId: this.whatsappConfig.businessAccountId,
+      baseUrl: this.whatsappConfig.baseUrl,
+      hasAccessToken: !!this.whatsappConfig.accessToken,
+      tokenLength: this.whatsappConfig.accessToken?.length || 0,
+    });
 
     this.client = axios.create({
-      baseURL: whatsappConfig.baseUrl,
-      timeout: whatsappConfig.timeout,
+      baseURL: this.whatsappConfig.baseUrl,
+      timeout: this.whatsappConfig.timeout,
       headers: {
-        Authorization: `Bearer ${whatsappConfig.accessToken}`,
         'Content-Type': 'application/json',
+      },
+      params: {
+        access_token: this.whatsappConfig.accessToken,
       },
     });
 
@@ -224,8 +238,8 @@ class WhatsAppClient {
       }
 
       // Retry on rate limit or network errors
-      if (attempt < whatsappConfig.retryAttempts - 1) {
-        const delay = whatsappConfig.retryDelays[attempt];
+      if (attempt < this.whatsappConfig.retryAttempts - 1) {
+        const delay = this.whatsappConfig.retryDelays[attempt];
         logger.warn(`Retrying WhatsApp API request in ${delay}ms (attempt ${attempt + 1})`, {
           error: error instanceof Error ? error.message : String(error),
         });
@@ -339,11 +353,19 @@ class WhatsAppClient {
    */
   async checkConnectivity(): Promise<boolean> {
     try {
-      await this.getPhoneNumberInfo();
+      logger.info('Starting WhatsApp connectivity check...');
+      const phoneInfo = await this.getPhoneNumberInfo();
+      logger.info('WhatsApp connectivity check successful', {
+        verifiedName: phoneInfo.verified_name,
+        displayPhone: phoneInfo.display_phone_number,
+        qualityRating: phoneInfo.quality_rating,
+      });
       return true;
     } catch (error) {
       logger.error('WhatsApp connectivity check failed', {
         error: error instanceof Error ? error.message : String(error),
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        stack: error instanceof Error ? error.stack : undefined,
       });
       return false;
     }

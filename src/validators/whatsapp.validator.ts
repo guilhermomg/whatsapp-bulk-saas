@@ -1,6 +1,7 @@
 import Joi from 'joi';
 
 export const sendTextMessageSchema = Joi.object({
+  type: Joi.string().valid('text').required(),
   to: Joi.string()
     .pattern(/^\+?[1-9]\d{1,14}$/)
     .required()
@@ -21,6 +22,7 @@ export const sendTextMessageSchema = Joi.object({
 });
 
 export const sendTemplateMessageSchema = Joi.object({
+  type: Joi.string().valid('template').required(),
   to: Joi.string()
     .pattern(/^\+?[1-9]\d{1,14}$/)
     .required()

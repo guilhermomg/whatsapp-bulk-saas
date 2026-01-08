@@ -1,5 +1,5 @@
 import logger from '../config/logger';
-import whatsappConfig, { validateWhatsAppConfig } from '../config/whatsapp';
+import getWhatsAppConfig, { validateWhatsAppConfig } from '../config/whatsapp';
 
 /**
  * Validates all required environment variables and configurations on startup
@@ -11,6 +11,7 @@ const validateEnvironment = (): void => {
   try {
     // Validate WhatsApp configuration
     validateWhatsAppConfig();
+    const whatsappConfig = getWhatsAppConfig();
     logger.info('✓ WhatsApp configuration is valid');
     logger.info(`  - API Version: ${whatsappConfig.apiVersion}`);
     logger.info(`  - Phone Number ID: ${whatsappConfig.phoneNumberId.slice(0, 8)}...`);
