@@ -1,0 +1,235 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Enums
+enum SubscriptionTier {
+  free
+  basic
+  pro
+}
+
+enum OptInSource {
+  manual
+  csv
+  api
+  webhook
+}
+
+enum TemplateCategory {
+  marketing
+  utility
+  authentication
+}
+
+enum TemplateStatus {
+  draft
+  pending
+  approved
+  rejected
+}
+
+enum MessageType {
+  text
+  template
+}
+
+enum CampaignStatus {
+  draft
+  scheduled
+  processing
+  completed
+  failed
+  paused
+}
+
+enum MessageDirection {
+  outbound
+  inbound
+}
+
+enum MessageContentType {
+  text
+  template
+  image
+  document
+}
+
+enum MessageStatus {
+  queued
+  sent
+  delivered
+  read
+  failed
+}
+
+// Models
+model User {
+  id                   String           @id @default(uuid())
+  email                String           @unique
+  businessName         String?
+  wabaId               String?          @map("waba_id")
+  phoneNumberId        String?          @map("phone_number_id")
+  accessToken          String           @map("access_token") // Will be encrypted
+  webhookVerifyToken   String?          @map("webhook_verify_token") // Will be encrypted
+  subscriptionTier     SubscriptionTier @default(free) @map("subscription_tier")
+  isActive             Boolean          @default(true) @map("is_active")
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  contacts             Contact[]
+  templates            Template[]
+  campaigns            Campaign[]
+  messages             Message[]
+  webhookEvents        WebhookEvent[]
+
+  @@map("users")
+}
+
+model Contact {
+  id             String       @id @default(uuid())
+  userId         String       @map("user_id")
+  phone          String       // E.164 format
+  name           String?
+  email          String?
+  optedIn        Boolean      @default(false) @map("opted_in")
+  optedInAt      DateTime?    @map("opted_in_at")
+  optedOutAt     DateTime?    @map("opted_out_at")
+  optInSource    OptInSource? @map("opt_in_source")
+  tags           String[]     @default([])
+  metadata       Json?        @db.JsonB
+  isBlocked      Boolean      @default(false) @map("is_blocked")
+  blockedReason  String?      @map("blocked_reason")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages       Message[]
+
+  @@unique([userId, phone])
+  @@index([userId])
+  @@index([phone])
+  @@index([optedIn])
+  @@index([tags])
+  @@map("contacts")
+}
+
+model Template {
+  id                  String           @id @default(uuid())
+  userId              String           @map("user_id")
+  name                String
+  whatsappTemplateId  String?          @map("whatsapp_template_id")
+  language            String           @default("en_US")
+  category            TemplateCategory
+  status              TemplateStatus   @default(draft)
+  components          Json             @db.JsonB // Header, body, footer, buttons
+  rejectionReason     String?          @map("rejection_reason")
+  approvedAt          DateTime?        @map("approved_at")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaigns           Campaign[]
+
+  @@unique([userId, name])
+  @@map("templates")
+}
+
+model Campaign {
+  id                String         @id @default(uuid())
+  userId            String         @map("user_id")
+  name              String
+  templateId        String?        @map("template_id")
+  messageType       MessageType    @map("message_type")
+  messageContent    Json           @db.JsonB @map("message_content")
+  status            CampaignStatus @default(draft)
+  scheduledAt       DateTime?      @map("scheduled_at")
+  startedAt         DateTime?      @map("started_at")
+  completedAt       DateTime?      @map("completed_at")
+  totalRecipients   Int            @default(0) @map("total_recipients")
+  sentCount         Int            @default(0) @map("sent_count")
+  deliveredCount    Int            @default(0) @map("delivered_count")
+  failedCount       Int            @default(0) @map("failed_count")
+  readCount         Int            @default(0) @map("read_count")
+  errorMessage      String?        @map("error_message")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template          Template?      @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  messages          Message[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("campaigns")
+}
+
+model Message {
+  id                 String             @id @default(uuid())
+  campaignId         String?            @map("campaign_id")
+  contactId          String             @map("contact_id")
+  userId             String             @map("user_id")
+  whatsappMessageId  String?            @unique @map("whatsapp_message_id")
+  direction          MessageDirection
+  type               MessageContentType
+  content            Json               @db.JsonB
+  status             MessageStatus      @default(queued)
+  sentAt             DateTime?          @map("sent_at")
+  deliveredAt        DateTime?          @map("delivered_at")
+  readAt             DateTime?          @map("read_at")
+  failedAt           DateTime?          @map("failed_at")
+  errorCode          String?            @map("error_code")
+  errorMessage       String?            @map("error_message")
+  retryCount         Int                @default(0) @map("retry_count")
+  metadata           Json?              @db.JsonB
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  campaign           Campaign?          @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  contact            Contact            @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  webhookEvents      WebhookEvent[]
+
+  @@index([campaignId])
+  @@index([contactId])
+  @@index([userId])
+  @@index([status])
+  @@index([whatsappMessageId])
+  @@map("messages")
+}
+
+model WebhookEvent {
+  id           String    @id @default(uuid())
+  userId       String?   @map("user_id")
+  eventType    String    @map("event_type")
+  payload      Json      @db.JsonB
+  messageId    String?   @map("message_id")
+  processed    Boolean   @default(false)
+  processedAt  DateTime? @map("processed_at")
+  errorMessage String?   @map("error_message")
+  receivedAt   DateTime  @default(now()) @map("received_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user         User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  message      Message?  @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([eventType])
+  @@index([processed])
+  @@index([receivedAt])
+  @@index([messageId])
+  @@map("webhook_events")
+}
