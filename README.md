@@ -31,6 +31,7 @@ WhatsApp bulk messaging micro SaaS with compliant Cloud API integration. Node.js
 - **Testing**: Jest + Supertest + ts-jest
 - **Code Quality**: ESLint + Prettier (Airbnb TypeScript style guide)
 - **WhatsApp**: Meta Cloud API (v18.0)
+- **Database**: PostgreSQL with Prisma ORM
 
 ## Getting Started
 
@@ -38,6 +39,7 @@ WhatsApp bulk messaging micro SaaS with compliant Cloud API integration. Node.js
 
 - Node.js >= 18.0.0
 - npm >= 9.0.0
+- PostgreSQL >= 13 (local or cloud instance)
 
 ### Installation
 
@@ -57,9 +59,24 @@ npm install
 cp .env.example .env
 ```
 
-4. Update the `.env` file with your configuration. See [WhatsApp Setup Guide](docs/WHATSAPP_SETUP.md) for detailed instructions on obtaining WhatsApp credentials.
+4. Update the `.env` file with your configuration:
+   - Database: Set `DATABASE_URL` to your PostgreSQL connection string
+   - Encryption: Generate an encryption key with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` and set `ENCRYPTION_KEY`
+   - WhatsApp: See [WhatsApp Setup Guide](docs/WHATSAPP_SETUP.md) for obtaining WhatsApp credentials
 
-5. Build the TypeScript code:
+5. Set up the database:
+```bash
+# Generate Prisma Client
+npm run db:generate
+
+# Run migrations (requires PostgreSQL connection)
+npm run db:migrate
+
+# Seed sample data (optional, for development)
+npm run db:seed
+```
+
+6. Build the TypeScript code:
 ```bash
 npm run build
 ```
@@ -224,6 +241,83 @@ whatsapp-bulk-saas/
 | `npm run lint` | Run ESLint |
 | `npm run lint:fix` | Fix ESLint issues automatically |
 | `npm run format` | Format code with Prettier |
+| `npm run db:generate` | Generate Prisma Client |
+| `npm run db:migrate` | Run database migrations |
+| `npm run db:migrate:prod` | Deploy migrations to production |
+| `npm run db:reset` | Reset database (development only) |
+| `npm run db:seed` | Seed database with sample data |
+| `npm run db:studio` | Open Prisma Studio (database GUI) |
+| `npm run db:push` | Push schema changes without migrations |
+
+## Database
+
+This application uses PostgreSQL with Prisma ORM for robust data management.
+
+### Database Setup
+
+1. **Install PostgreSQL** (if running locally):
+   ```bash
+   # macOS
+   brew install postgresql
+   brew services start postgresql
+
+   # Ubuntu
+   sudo apt-get install postgresql
+   sudo service postgresql start
+   ```
+
+2. **Create Database**:
+   ```bash
+   createdb whatsapp_bulk_saas
+   ```
+
+3. **Configure Connection**:
+   Update `DATABASE_URL` in `.env`:
+   ```env
+   DATABASE_URL="postgresql://postgres:password@localhost:5432/whatsapp_bulk_saas?schema=public"
+   ```
+
+4. **Run Migrations**:
+   ```bash
+   npm run db:migrate
+   ```
+
+5. **Seed Sample Data** (optional):
+   ```bash
+   npm run db:seed
+   ```
+
+### Database Schema
+
+The schema includes:
+- **Users**: Multi-tenant user management with encrypted credentials
+- **Contacts**: Contact management with opt-in/opt-out tracking
+- **Templates**: WhatsApp message templates
+- **Campaigns**: Bulk messaging campaigns
+- **Messages**: Individual message tracking with status updates
+- **WebhookEvents**: Audit trail for all webhook events
+
+See [Database Schema Documentation](docs/database-schema.md) for complete details.
+
+### Free PostgreSQL Options
+
+For development and testing:
+- **Supabase** - 500MB free tier with excellent UI
+- **Neon** - 3GB free tier, serverless PostgreSQL
+- **Railway** - $5 credit/month
+- **ElephantSQL** - 20MB free (minimal but OK for testing)
+- **Local Docker**:
+  ```bash
+  docker run --name postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:15
+  ```
+
+### Prisma Studio
+
+View and edit your database with Prisma Studio:
+```bash
+npm run db:studio
+```
+Opens at http://localhost:5555
 
 ## Environment Variables
 
@@ -234,6 +328,12 @@ See `.env.example` for all available environment variables.
 - `PORT` - Server port (default: 3000)
 - `HOST` - Server host (default: localhost)
 - `LOG_LEVEL` - Logging level (debug/info/warn/error)
+
+### Database Configuration
+- `DATABASE_URL` - PostgreSQL connection string
+- `DATABASE_POOL_MIN` - Minimum connection pool size (default: 2)
+- `DATABASE_POOL_MAX` - Maximum connection pool size (default: 10)
+- `ENCRYPTION_KEY` - 32-byte hex key for encrypting sensitive data (generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`)
 
 ### WhatsApp Cloud API Configuration
 - `WHATSAPP_API_VERSION` - API version (default: v18.0)
