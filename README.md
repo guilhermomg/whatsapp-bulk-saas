@@ -154,6 +154,230 @@ This application integrates with the official WhatsApp Cloud API for compliant, 
 - `GET /webhooks/whatsapp` - Webhook verification endpoint
 - `POST /webhooks/whatsapp` - Receive message status updates and incoming messages
 
+## Template Management
+
+The application provides comprehensive template management for WhatsApp message templates, supporting the full template lifecycle from creation to approval and usage in campaigns.
+
+### Template Operations
+
+#### Create Template
+```bash
+curl -X POST http://localhost:3000/api/v1/templates \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "your-user-id",
+    "name": "order_confirmation",
+    "language": "en_US",
+    "category": "utility",
+    "components": {
+      "header": {
+        "type": "text",
+        "text": "Order Confirmation"
+      },
+      "body": {
+        "text": "Hi {{1}}, your order {{2}} has been confirmed. Total: {{3}}.",
+        "variables": ["customer_name", "order_id", "total_amount"]
+      },
+      "footer": {
+        "text": "Thank you for your purchase"
+      },
+      "buttons": [
+        {
+          "type": "url",
+          "text": "Track Order",
+          "url": "https://example.com/track"
+        }
+      ]
+    }
+  }'
+```
+
+#### List Templates
+```bash
+# List all templates
+curl "http://localhost:3000/api/v1/templates?userId=your-user-id"
+
+# Filter by status
+curl "http://localhost:3000/api/v1/templates?userId=your-user-id&status=approved"
+
+# Filter by category
+curl "http://localhost:3000/api/v1/templates?userId=your-user-id&category=marketing"
+
+# Search by name
+curl "http://localhost:3000/api/v1/templates?userId=your-user-id&search=order"
+```
+
+#### Preview Template
+```bash
+curl -X POST "http://localhost:3000/api/v1/templates/template-id/preview?userId=your-user-id" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "parameters": {
+      "customer_name": "John Doe",
+      "order_id": "#12345",
+      "total_amount": "$99.99"
+    }
+  }'
+```
+
+#### Validate Template Parameters
+```bash
+curl -X POST "http://localhost:3000/api/v1/templates/template-id/validate?userId=your-user-id" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "parameters": {
+      "customer_name": "John Doe",
+      "order_id": "#12345",
+      "total_amount": "$99.99"
+    }
+  }'
+```
+
+#### Sync Templates from Meta
+```bash
+curl -X POST http://localhost:3000/api/v1/templates/sync \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "your-user-id",
+    "wabaId": "your-waba-id"
+  }'
+```
+
+### Template Categories
+
+- **Marketing**: Promotional messages, sales, offers (requires opt-in)
+- **Utility**: Order updates, account notifications, alerts
+- **Authentication**: OTP codes, verification messages
+
+### Template Structure
+
+Templates support the following components:
+
+- **Header** (optional): Text, image, video, or document (max 60 chars for text)
+- **Body** (required): Main message text with variables (max 1024 chars)
+- **Footer** (optional): Small text at bottom (max 60 chars)
+- **Buttons** (optional): Up to 3 action buttons (URL, phone, quick reply)
+
+### Variable Placeholders
+
+Templates support dynamic parameters using {{1}}, {{2}}, {{3}}, etc:
+
+```javascript
+// Template body
+"Hi {{1}}, your order {{2}} is ready for pickup at {{3}}."
+
+// Variables
+["customer_name", "order_number", "store_location"]
+
+// Result
+"Hi John, your order #12345 is ready for pickup at Main Street Store."
+```
+
+**Important**: Variables must be sequential starting from {{1}}.
+
+### Template Status Flow
+
+```
+Draft → Pending → Approved/Rejected
+         ↓           ↓
+    Submitted   Can be used in campaigns
+    to Meta
+```
+
+- **Draft**: Template is being created/edited
+- **Pending**: Submitted to Meta for approval
+- **Approved**: Ready to use in campaigns
+- **Rejected**: Not approved by Meta (check rejection reason)
+
+### Template Validation
+
+The system validates:
+- ✅ Name format (lowercase, numbers, underscores only)
+- ✅ Sequential variable numbering ({{1}}, {{2}}, {{3}})
+- ✅ Character limits (body: 1024, header/footer: 60, buttons: 25)
+- ✅ Maximum 3 buttons per template
+- ✅ Valid language codes (ISO 639-1)
+- ✅ Valid component structure
+
+### Template Examples
+
+#### Utility Template (Order Update)
+```json
+{
+  "name": "order_update",
+  "category": "utility",
+  "language": "en_US",
+  "components": {
+    "body": {
+      "text": "Order {{1}} has been {{2}}. Expected delivery: {{3}}.",
+      "variables": ["order_id", "status", "delivery_date"]
+    }
+  }
+}
+```
+
+#### Marketing Template (Summer Sale)
+```json
+{
+  "name": "summer_sale",
+  "category": "marketing",
+  "language": "en_US",
+  "components": {
+    "header": {
+      "type": "image",
+      "url": "https://example.com/summer.jpg"
+    },
+    "body": {
+      "text": "Hi {{1}}! Summer sale is here! Get {{2}}% off on all items.",
+      "variables": ["customer_name", "discount_percentage"]
+    },
+    "footer": {
+      "text": "Valid until Aug 31"
+    },
+    "buttons": [
+      {
+        "type": "url",
+        "text": "Shop Now",
+        "url": "https://shop.example.com"
+      }
+    ]
+  }
+}
+```
+
+#### Authentication Template (OTP)
+```json
+{
+  "name": "verification_code",
+  "category": "authentication",
+  "language": "en_US",
+  "components": {
+    "body": {
+      "text": "Your verification code is {{1}}. Valid for {{2}} minutes.",
+      "variables": ["code", "expiry_minutes"]
+    }
+  }
+}
+```
+
+### Template API Endpoints
+
+- `POST /api/v1/templates` - Create a new template
+- `GET /api/v1/templates` - List templates with filters
+- `GET /api/v1/templates/:id` - Get template by ID
+- `PUT /api/v1/templates/:id` - Update template (draft only)
+- `DELETE /api/v1/templates/:id` - Delete template
+- `POST /api/v1/templates/:id/preview` - Preview template with parameters
+- `POST /api/v1/templates/:id/validate` - Validate template parameters
+- `POST /api/v1/templates/sync` - Sync templates from Meta WhatsApp API
+
+### Available Endpoints
+
+- `GET /api/v1/whatsapp/status` - Check WhatsApp connectivity and phone number status
+- `POST /api/v1/messages/send` - Send text or template messages
+- `GET /webhooks/whatsapp` - Webhook verification endpoint
+- `POST /webhooks/whatsapp` - Receive message status updates and incoming messages
+
 ### Features
 
 - ✅ Send text messages with URL preview support

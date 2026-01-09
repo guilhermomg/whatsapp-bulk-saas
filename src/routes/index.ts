@@ -4,6 +4,7 @@ import messagesRoutes from './messages.routes';
 import whatsappRoutes from './whatsapp.routes';
 import contactRoutes from './contact.routes';
 import tagsRoutes from './tags.routes';
+import templateRoutes from './template.routes';
 
 const router = express.Router();
 
@@ -12,5 +13,6 @@ router.use('/messages', messagesRoutes);
 router.use('/whatsapp', whatsappRoutes);
 router.use('/contacts', contactRoutes);
 router.use('/tags', tagsRoutes);
+router.use('/templates', templateRoutes);
 
 export default router;
