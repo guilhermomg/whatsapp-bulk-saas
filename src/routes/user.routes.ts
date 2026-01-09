@@ -2,10 +2,12 @@ import express from 'express';
 import * as userController from '../controllers/user.controller';
 import authenticate from '../middleware/authenticate';
 import requireVerifiedEmail from '../middleware/requireVerifiedEmail';
+import { authenticatedLimiter } from '../middleware/rateLimiters';
 
 const router = express.Router();
 
-// All user routes require authentication
+// All user routes require authentication and rate limiting
+router.use(authenticatedLimiter);
 router.use(authenticate);
 
 /**

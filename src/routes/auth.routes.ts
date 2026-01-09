@@ -6,6 +6,7 @@ import {
   loginLimiter,
   passwordResetLimiter,
   emailVerificationLimiter,
+  authenticatedLimiter,
 } from '../middleware/rateLimiters';
 
 const router = express.Router();
@@ -187,6 +188,6 @@ router.post('/reset-password', authController.resetPassword);
  *       401:
  *         description: Not authenticated
  */
-router.get('/me', authenticate, authController.getCurrentUser);
+router.get('/me', authenticatedLimiter, authenticate, authController.getCurrentUser);
 
 export default router;
