@@ -1,9 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { ForbiddenError } from '../utils/errors';
 import logger from '../config/logger';
-
-const prisma = new PrismaClient();
+import prisma from '../../prisma.config';
 
 /**
  * Middleware to require email verification

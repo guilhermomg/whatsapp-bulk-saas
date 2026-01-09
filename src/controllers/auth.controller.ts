@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { hashPassword, comparePassword, validatePasswordStrength } from '../utils/passwordUtils';
 import { generateToken } from '../utils/jwtUtils';
 import {
@@ -29,8 +28,7 @@ import {
 } from '../utils/errors';
 import logger from '../config/logger';
 import { encrypt } from '../utils/encryption';
-
-const prisma = new PrismaClient();
+import prisma from '../../prisma.config';
 
 const ACCOUNT_LOCK_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -74,8 +72,10 @@ export async function register(req: Request, res: Response, next: NextFunction):
       hashedToken: hashedVerificationToken,
     } = generateEmailVerificationToken();
 
-    // Create default encrypted access token (placeholder until user connects WhatsApp)
-    const defaultAccessToken = encrypt('pending-setup');
+    // Create placeholder encrypted access token until user connects WhatsApp
+    // Using a randomly generated token for security
+    const placeholderToken = `placeholder_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const defaultAccessToken = encrypt(placeholderToken);
 
     // Create user
     const user = await prisma.user.create({

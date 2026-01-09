@@ -15,18 +15,16 @@ export interface JWTPayload {
  * @returns JWT token string
  */
 export function generateToken(userId: string, email: string): string {
-  const { jwtSecret } = config.auth;
+  const { jwtSecret, jwtExpiresIn } = config.auth;
 
   if (!jwtSecret) {
     throw new Error('JWT_SECRET is not configured');
   }
 
-  const options: SignOptions = {};
-  const expiresIn = config.auth.jwtExpiresIn;
-  if (expiresIn) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (options as any).expiresIn = expiresIn;
-  }
+  // Type assertion for expiresIn to satisfy JWT library type requirements
+  const options: SignOptions = jwtExpiresIn
+    ? ({ expiresIn: jwtExpiresIn } as SignOptions)
+    : {};
 
   return jwt.sign({ userId, email }, jwtSecret, options);
 }

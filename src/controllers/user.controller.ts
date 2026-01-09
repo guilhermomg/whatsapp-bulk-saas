@@ -1,12 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { hashPassword, comparePassword, validatePasswordStrength } from '../utils/passwordUtils';
 import { sanitizeUser } from '../utils/sanitizeUser';
 import { changePasswordSchema, updateProfileSchema } from '../validators/authValidator';
 import { BadRequestError, UnauthorizedError, NotFoundError } from '../utils/errors';
 import logger from '../config/logger';
-
-const prisma = new PrismaClient();
+import prisma from '../../prisma.config';
 
 /**
  * Get user profile
