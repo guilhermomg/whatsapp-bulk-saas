@@ -6,7 +6,9 @@ import logger from '../config/logger';
  * Create email transporter
  */
 const createTransporter = () => {
-  const { host, port, user, password, secure } = config.email;
+  const {
+    host, port, user, password, secure,
+  } = config.email;
 
   if (!user || !password) {
     logger.warn('Email credentials not configured. Email service will not be available.');

@@ -15,7 +15,7 @@ export interface JWTPayload {
  * @returns JWT token string
  */
 export function generateToken(userId: string, email: string): string {
-  const jwtSecret = config.auth.jwtSecret;
+  const { jwtSecret } = config.auth;
 
   if (!jwtSecret) {
     throw new Error('JWT_SECRET is not configured');
@@ -38,7 +38,7 @@ export function generateToken(userId: string, email: string): string {
  * @throws Error if token is invalid or expired
  */
 export function verifyToken(token: string): JWTPayload {
-  const jwtSecret = config.auth.jwtSecret;
+  const { jwtSecret } = config.auth;
 
   if (!jwtSecret) {
     throw new Error('JWT_SECRET is not configured');
@@ -65,7 +65,7 @@ export function verifyToken(token: string): JWTPayload {
  * @throws Error if token is invalid or cannot be decoded
  */
 export function refreshToken(token: string): string {
-  const jwtSecret = config.auth.jwtSecret;
+  const { jwtSecret } = config.auth;
 
   if (!jwtSecret) {
     throw new Error('JWT_SECRET is not configured');

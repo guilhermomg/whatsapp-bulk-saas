@@ -69,8 +69,10 @@ export async function register(req: Request, res: Response, next: NextFunction):
     const hashedPassword = await hashPassword(password);
 
     // Generate email verification token
-    const { token: verificationToken, hashedToken: hashedVerificationToken } =
-      generateEmailVerificationToken();
+    const {
+      token: verificationToken,
+      hashedToken: hashedVerificationToken,
+    } = generateEmailVerificationToken();
 
     // Create default encrypted access token (placeholder until user connects WhatsApp)
     const defaultAccessToken = encrypt('pending-setup');
@@ -90,9 +92,9 @@ export async function register(req: Request, res: Response, next: NextFunction):
 
     // Send verification email (don't wait for it to complete)
     sendVerificationEmail(user.email, verificationToken, businessName || user.email).catch(
-      (error) => {
+      (err) => {
         logger.error('Failed to send verification email during registration', {
-          error,
+          error: err,
           userId: user.id,
         });
       },
@@ -172,9 +174,9 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
         updateData.lockUntil = lockUntil;
 
         // Send account locked email (don't wait for it)
-        sendAccountLockedEmail(user.email, user.businessName || user.email, 30).catch((error) => {
+        sendAccountLockedEmail(user.email, user.businessName || user.email, 30).catch((err) => {
           logger.error('Failed to send account locked email', {
-            error,
+            error: err,
             userId: user.id,
           });
         });
@@ -312,8 +314,10 @@ export async function resendVerification(
     }
 
     // Generate new verification token
-    const { token: verificationToken, hashedToken: hashedVerificationToken } =
-      generateEmailVerificationToken();
+    const {
+      token: verificationToken,
+      hashedToken: hashedVerificationToken,
+    } = generateEmailVerificationToken();
 
     // Update user with new token
     await prisma.user.update({
@@ -361,8 +365,7 @@ export async function forgotPassword(
     });
 
     // Always return success to prevent email enumeration
-    const successMessage =
-      'If an account with that email exists, a password reset link has been sent.';
+    const successMessage = 'If an account with that email exists, a password reset link has been sent.';
 
     if (!user) {
       // Still send success response to prevent email enumeration
@@ -375,8 +378,11 @@ export async function forgotPassword(
     }
 
     // Generate password reset token
-    const { token: resetToken, hashedToken: hashedResetToken, expiresAt } =
-      generatePasswordResetToken();
+    const {
+      token: resetToken,
+      hashedToken: hashedResetToken,
+      expiresAt,
+    } = generatePasswordResetToken();
 
     // Update user with reset token
     await prisma.user.update({
@@ -389,9 +395,9 @@ export async function forgotPassword(
 
     // Send password reset email (don't wait for it)
     sendPasswordResetEmail(user.email, resetToken, user.businessName || user.email).catch(
-      (error) => {
+      (err) => {
         logger.error('Failed to send password reset email', {
-          error,
+          error: err,
           userId: user.id,
         });
       },

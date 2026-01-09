@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { ForbiddenError } from '../utils/errors';
 import { PrismaClient } from '@prisma/client';
+import { ForbiddenError } from '../utils/errors';
 import logger from '../config/logger';
 
 const prisma = new PrismaClient();

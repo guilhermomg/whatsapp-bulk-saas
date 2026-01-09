@@ -5,7 +5,6 @@ const prisma = new PrismaClient();
 
 describe('User Profile API', () => {
   let authToken: string;
-  let userId: string;
 
   beforeAll(async () => {
     // Clean up test users
@@ -25,7 +24,6 @@ describe('User Profile API', () => {
     });
 
     authToken = response.body.data.token;
-    userId = response.body.data.user.id;
   });
 
   afterAll(async () => {

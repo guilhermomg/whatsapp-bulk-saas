@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
 import createTestRequest from '../helpers/testUtils';
-import { hashToken } from '../../src/utils/tokenUtils';
 
 const prisma = new PrismaClient();
 
@@ -173,13 +172,17 @@ describe('Authentication API', () => {
         password: 'Lock123!@#',
       });
 
-      // Attempt 5 failed logins
-      for (let i = 0; i < 5; i += 1) {
+      //  5 failed login attempts for brute force test
+      /* eslint-disable no-restricted-syntax, @typescript-eslint/naming-convention */
+      /* eslint-disable @typescript-eslint/no-unused-vars, no-await-in-loop */
+      for (const _ of Array.from({ length: 5 })) {
         await createTestRequest().post('/api/v1/auth/login').send({
           email,
           password: 'WrongPassword',
         });
       }
+      /* eslint-enable no-restricted-syntax, @typescript-eslint/naming-convention */
+      /* eslint-enable @typescript-eslint/no-unused-vars, no-await-in-loop */
 
       // 6th attempt should indicate account is locked
       const response = await createTestRequest()
@@ -203,13 +206,17 @@ describe('Authentication API', () => {
         password,
       });
 
-      // Attempt 3 failed logins
-      for (let i = 0; i < 3; i += 1) {
+      // 3 failed login attempts
+      /* eslint-disable no-restricted-syntax, @typescript-eslint/naming-convention */
+      /* eslint-disable @typescript-eslint/no-unused-vars, no-await-in-loop */
+      for (const _ of Array.from({ length: 3 })) {
         await createTestRequest().post('/api/v1/auth/login').send({
           email,
           password: 'WrongPassword',
         });
       }
+      /* eslint-enable no-restricted-syntax, @typescript-eslint/naming-convention */
+      /* eslint-enable @typescript-eslint/no-unused-vars, no-await-in-loop */
 
       // Successful login should reset attempts
       await createTestRequest()
