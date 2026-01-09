@@ -10,11 +10,14 @@ WhatsApp bulk messaging micro SaaS with compliant Cloud API integration. Node.js
 - 🔄 Retry logic with exponential backoff for robust messaging
 - 🔐 Webhook signature verification for secure event handling
 - 📨 Support for text and template messages
+- 🔑 **Complete Authentication System** with JWT, email verification, and password reset
+- 🛡️ **Security Features**: bcrypt password hashing (cost 12), brute force protection, rate limiting
+- 📧 Email service with verification and password reset flows
 - 🏗️ Clean architecture with separation of concerns
-- 🔒 Security best practices (Helmet, CORS)
+- 🔒 Security best practices (Helmet, CORS, token hashing)
 - 📝 Comprehensive logging with Winston
 - 📚 API documentation with Swagger
-- ✅ Testing setup with Jest and Supertest (21 tests passing)
+- ✅ Testing setup with Jest and Supertest
 - 🔄 Auto-reload development with Nodemon
 - 🎨 Code quality with ESLint and Prettier
 - 🏥 Health check endpoint
@@ -108,6 +111,77 @@ http://localhost:3000/api-docs
 Check if the API is running:
 ```
 http://localhost:3000/api/v1/health
+```
+
+## Authentication & User Management
+
+The application includes a complete authentication system with secure user registration, JWT-based authentication, email verification, and password reset functionality.
+
+### Features
+
+- **User Registration**: Secure sign-up with email and password
+- **JWT Authentication**: Token-based authentication with 7-day expiration
+- **Email Verification**: Required before accessing protected resources
+- **Password Security**: bcrypt hashing with cost factor 12, strength validation
+- **Brute Force Protection**: Account lock after 5 failed attempts (30 minutes)
+- **Password Reset**: Secure token-based password reset flow (1-hour expiration)
+- **Rate Limiting**: Protection against abuse on authentication endpoints
+- **Profile Management**: Update business info and change password
+
+### Quick Start
+
+1. **Register a new user**:
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "SecurePass123!@#",
+    "businessName": "My Business"
+  }'
+```
+
+2. **Login**:
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "SecurePass123!@#"
+  }'
+```
+
+3. **Use JWT token** in subsequent requests:
+```bash
+curl -X GET http://localhost:3000/api/v1/auth/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Documentation
+
+For complete authentication API documentation, examples, and security features, see:
+- [Authentication Guide](docs/AUTHENTICATION.md) - Detailed API reference
+- [Swagger Documentation](http://localhost:3000/api-docs) - Interactive API docs
+
+### Environment Variables
+
+Add these to your `.env` file:
+
+```env
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+JWT_EXPIRES_IN=7d
+
+# Email Configuration (for verification and password reset)
+EMAIL_FROM=noreply@yourapp.com
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
+
+# App URLs
+FRONTEND_URL=http://localhost:3000
+BACKEND_URL=http://localhost:3000
 ```
 
 ## WhatsApp Cloud API

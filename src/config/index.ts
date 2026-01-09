@@ -21,6 +21,22 @@ interface Config {
     poolMax: number;
   };
   encryptionKey: string;
+  auth: {
+    jwtSecret: string;
+    jwtExpiresIn: string;
+  };
+  email: {
+    from: string;
+    host: string;
+    port: number;
+    user: string;
+    password: string;
+    secure: boolean;
+  };
+  app: {
+    frontendUrl: string;
+    backendUrl: string;
+  };
 }
 
 const config: Config = {
@@ -46,6 +62,22 @@ const config: Config = {
     poolMax: parseInt(process.env.DATABASE_POOL_MAX || '10', 10),
   },
   encryptionKey: process.env.ENCRYPTION_KEY || '',
+  auth: {
+    jwtSecret: process.env.JWT_SECRET || '',
+    jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  },
+  email: {
+    from: process.env.EMAIL_FROM || 'noreply@example.com',
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.EMAIL_PORT || '587', 10),
+    user: process.env.EMAIL_USER || '',
+    password: process.env.EMAIL_PASSWORD || '',
+    secure: process.env.EMAIL_SECURE === 'true',
+  },
+  app: {
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+    backendUrl: process.env.BACKEND_URL || 'http://localhost:3000',
+  },
 };
 
 export default config;
