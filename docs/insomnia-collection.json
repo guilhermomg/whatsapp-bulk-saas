@@ -985,6 +985,113 @@
       "metaSortKey": -1704586709000,
       "isPrivate": false,
       "_type": "request"
+    },
+    {
+      "_id": "fld_user_profile",
+      "parentId": "wrk_whatsapp_bulk_saas",
+      "modified": 1704586501000,
+      "created": 1704586501000,
+      "name": "User Profile",
+      "description": "User profile and WhatsApp connection management",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704586400000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_connect_whatsapp",
+      "parentId": "fld_user_profile",
+      "modified": 1704586501000,
+      "created": 1704586501000,
+      "url": "{{ _.base_url }}/users/connect-whatsapp",
+      "name": "Connect WhatsApp Business Account",
+      "description": "Connect user's WhatsApp Business Account credentials",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"wabaId\": \"123456789\",\n  \"phoneNumberId\": \"987654321\",\n  \"accessToken\": \"EAATaDzTD97ABQb...\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586501000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_get_whatsapp_status",
+      "parentId": "fld_user_profile",
+      "modified": 1704586501000,
+      "created": 1704586501000,
+      "url": "{{ _.base_url }}/users/me/whatsapp",
+      "name": "Get WhatsApp Connection Status",
+      "description": "Get user's WhatsApp connection status and details",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586500000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_disconnect_whatsapp",
+      "parentId": "fld_user_profile",
+      "modified": 1704586501000,
+      "created": 1704586501000,
+      "url": "{{ _.base_url }}/users/me/whatsapp",
+      "name": "Disconnect WhatsApp",
+      "description": "Disconnect user's WhatsApp Business Account",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586499000,
+      "isPrivate": false,
+      "_type": "request"
+    },
+    {
+      "_id": "req_get_user_profile",
+      "parentId": "fld_user_profile",
+      "modified": 1704586501000,
+      "created": 1704586501000,
+      "url": "{{ _.base_url }}/users/me",
+      "name": "Get User Profile",
+      "description": "Get authenticated user's profile",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.auth_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704586498000,
+      "isPrivate": false,
+      "_type": "request"
     }
   ]
 }
