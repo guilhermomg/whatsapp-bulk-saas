@@ -59,3 +59,15 @@ export const authenticatedLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+/**
+ * Rate limiter for WhatsApp connection endpoint
+ * 5 requests per hour per IP to prevent brute force attempts
+ */
+export const whatsappConnectionLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // 5 requests per windowMs
+  message: 'Too many WhatsApp connection attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
