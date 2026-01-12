@@ -1,18 +1,55 @@
 # WhatsApp Cloud API Setup Guide
 
-This guide walks you through setting up the WhatsApp Cloud API integration for the WhatsApp Bulk SaaS application.
+This guide walks you through setting up the WhatsApp Cloud API integration for the WhatsApp Bulk SaaS application in **multi-tenant mode**.
+
+## Multi-Tenant Architecture
+
+This application operates in **multi-tenant mode**, meaning:
+- Each user connects their own WhatsApp Business Account (WABA)
+- Credentials are stored per-user in the database (encrypted)
+- Users send messages from their own WhatsApp phone numbers
+- Multiple users can use the platform simultaneously with different phone numbers
+
+### Setup Overview
+
+1. **Platform Owner**: Minimal setup - only need `WHATSAPP_APP_SECRET` for webhook verification
+2. **End Users**: Each user obtains their own WhatsApp Business Account credentials and connects via API
 
 ## Table of Contents
 
-1. [Prerequisites](#prerequisites)
-2. [Meta Business Manager Setup](#meta-business-manager-setup)
-3. [WhatsApp Business Account (WABA) Creation](#whatsapp-business-account-waba-creation)
-4. [Phone Number Registration](#phone-number-registration)
-5. [Obtaining Permanent Access Token](#obtaining-permanent-access-token)
-6. [Test Phone Number Setup](#test-phone-number-setup)
-7. [Webhook Configuration](#webhook-configuration)
-8. [Environment Configuration](#environment-configuration)
-9. [Testing the Integration](#testing-the-integration)
+1. [For Platform Owners](#for-platform-owners)
+2. [For End Users](#for-end-users)
+3. [Prerequisites](#prerequisites)
+4. [Meta Business Manager Setup](#meta-business-manager-setup)
+5. [WhatsApp Business Account (WABA) Creation](#whatsapp-business-account-waba-creation)
+6. [Phone Number Registration](#phone-number-registration)
+7. [Obtaining Permanent Access Token](#obtaining-permanent-access-token)
+8. [Test Phone Number Setup](#test-phone-number-setup)
+9. [Connecting to the Platform](#connecting-to-the-platform)
+10. [Webhook Configuration (Optional)](#webhook-configuration-optional)
+11. [Testing the Integration](#testing-the-integration)
+
+## For Platform Owners
+
+If you're running this platform as a SaaS service:
+
+1. **Create a Meta App** (for webhook verification):
+   - Go to [developers.facebook.com](https://developers.facebook.com)
+   - Create a Business app
+   - Add WhatsApp product
+   - Get the App Secret from Settings → Basic
+
+2. **Configure Environment**:
+   ```env
+   WHATSAPP_API_VERSION=v18.0
+   WHATSAPP_APP_SECRET=your_app_secret
+   ```
+
+3. **Deploy and Share**: Your users will connect their own WhatsApp accounts through the API.
+
+## For End Users
+
+If you're a user of this platform, follow these steps to connect your WhatsApp Business Account:
 
 ## Prerequisites
 
@@ -129,6 +166,143 @@ By default, Facebook provides a temporary access token that expires in 24 hours.
 3. Click "Add People" → Select your system user
 4. Grant "Full control" permissions
 
+## Connecting to the Platform
+
+Once you have your credentials, connect them to the platform:
+
+### Step 1: Register and Login
+
+1. **Register** a new account on the platform:
+   ```bash
+   POST /api/v1/auth/register
+   {
+     "email": "your-email@example.com",
+     "password": "SecurePassword123!",
+     "businessName": "Your Business Name"
+   }
+   ```
+
+2. **Verify your email** (check your inbox for verification link)
+
+3. **Login** to get your JWT token:
+   ```bash
+   POST /api/v1/auth/login
+   {
+     "email": "your-email@example.com",
+     "password": "SecurePassword123!"
+   }
+   ```
+   
+   Save the returned `token` - you'll need it for authenticated requests.
+
+### Step 2: Connect WhatsApp Credentials
+
+Use the credentials you obtained in previous steps:
+
+```bash
+POST /api/v1/users/connect-whatsapp
+Authorization: Bearer YOUR_JWT_TOKEN
+Content-Type: application/json
+
+{
+  "wabaId": "YOUR_WABA_ID",
+  "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+  "accessToken": "YOUR_PERMANENT_ACCESS_TOKEN"
+}
+```
+
+**Where to find these values:**
+- `wabaId`: WhatsApp Business Account ID (from WABA creation section)
+- `phoneNumberId`: Phone Number ID (from phone registration section)
+- `accessToken`: Permanent token (from system user token generation)
+
+**Response (on success):**
+```json
+{
+  "success": true,
+  "message": "WhatsApp account connected successfully",
+  "data": {
+    "whatsapp": {
+      "phoneNumber": "+14155552671",
+      "verifiedName": "Your Business",
+      "qualityRating": "GREEN",
+      "messagingLimitTier": "TIER_1K",
+      "connectedAt": "2026-01-12T10:00:00Z"
+    }
+  }
+}
+```
+
+### Step 3: Verify Connection
+
+Check your connection status:
+
+```bash
+GET /api/v1/users/me/whatsapp
+Authorization: Bearer YOUR_JWT_TOKEN
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "connected": true,
+    "phoneNumber": "+14155552671",
+    "qualityRating": "GREEN",
+    "messagingLimitTier": "TIER_1K",
+    "connectedAt": "2026-01-12T10:00:00Z"
+  }
+}
+```
+
+### Step 4: Start Sending Messages
+
+Now you can send messages from your WhatsApp number:
+
+```bash
+POST /api/v1/messages/send
+Authorization: Bearer YOUR_JWT_TOKEN
+Content-Type: application/json
+
+{
+  "type": "text",
+  "to": "+14155238886",
+  "body": "Hello from my WhatsApp Business!"
+}
+```
+
+### Common Connection Errors
+
+**401 - Invalid access token or insufficient permissions**
+- Verify your access token is correct
+- Ensure the token has `whatsapp_business_messaging` and `whatsapp_business_management` permissions
+- Check that the token is permanent (never expires)
+- Confirm the system user has access to the WhatsApp Business Account
+
+**404 - Invalid phone number ID**
+- Double-check your phone number ID from Meta Business Manager
+- Ensure the phone number is properly registered and verified
+
+**409 - Phone number already connected to another account**
+- Each WhatsApp phone number can only be connected to one platform account
+- Disconnect from the other account first, or use a different phone number
+
+**Rate limit exceeded**
+- Connection endpoint is limited to 5 attempts per hour
+- Wait before trying again
+
+### Disconnecting
+
+To disconnect your WhatsApp account:
+
+```bash
+DELETE /api/v1/users/me/whatsapp
+Authorization: Bearer YOUR_JWT_TOKEN
+```
+
+This will remove your WhatsApp credentials from the platform. You can reconnect anytime by following Step 2 again.
+
 ## Test Phone Number Setup
 
 To test message sending during development:
@@ -144,7 +318,7 @@ To test message sending during development:
    - Example: `+14155238886` (US number)
    - Example: `+5511987654321` (Brazil number)
 
-## Webhook Configuration
+## Webhook Configuration (Optional)
 
 Webhooks allow WhatsApp to send you real-time notifications about message status and incoming messages.
 
