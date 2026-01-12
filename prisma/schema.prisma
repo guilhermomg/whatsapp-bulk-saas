@@ -78,7 +78,11 @@ model User {
   businessName           String?
   wabaId                 String?          @map("waba_id")
   phoneNumberId          String?          @map("phone_number_id")
-  accessToken            String           @map("access_token") // Will be encrypted
+  accessToken            String?          @map("access_token") // Will be encrypted
+  phoneNumber            String?          @map("phone_number") // Display phone number from WhatsApp
+  whatsappConnectedAt    DateTime?        @map("whatsapp_connected_at")
+  whatsappQualityRating  String?          @map("whatsapp_quality_rating") // GREEN/YELLOW/RED
+  whatsappMessagingLimit String?          @map("whatsapp_messaging_limit") // TIER_1K, TIER_10K, etc
   webhookVerifyToken     String?          @map("webhook_verify_token") // Will be encrypted
   subscriptionTier       SubscriptionTier @default(free) @map("subscription_tier")
   isActive               Boolean          @default(false) @map("is_active") // Changed to false until email verified

@@ -2,15 +2,28 @@ import { Request, Response } from 'express';
 import logger from '../config/logger';
 import WhatsAppClient from '../services/whatsapp/whatsappClient';
 import { sendTextMessageSchema, sendTemplateMessageSchema } from '../validators/whatsapp.validator';
-import { ValidationError } from '../utils/errors';
+import { ValidationError, UnauthorizedError } from '../utils/errors';
+import prisma from '../../prisma.config';
 
-let whatsappClient: WhatsAppClient;
+/**
+ * Get WhatsApp client for the authenticated user
+ */
+const getWhatsAppClientForUser = async (userId: string): Promise<WhatsAppClient> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
 
-const getWhatsAppClient = (): WhatsAppClient => {
-  if (!whatsappClient) {
-    whatsappClient = new WhatsAppClient();
+  if (!user) {
+    throw new UnauthorizedError('User not found');
   }
-  return whatsappClient;
+
+  if (!user.phoneNumberId || !user.accessToken) {
+    throw new ValidationError(
+      'WhatsApp account not configured. Please connect your WhatsApp Business Account first.',
+    );
+  }
+
+  return new WhatsAppClient(user);
 };
 
 /**
@@ -84,9 +97,17 @@ const getWhatsAppClient = (): WhatsAppClient => {
 export const sendMessage = async (req: Request, res: Response): Promise<void> => {
   const { type } = req.body;
 
+  if (!req.user) {
+    throw new UnauthorizedError('Authentication required');
+  }
+
   if (typeof type !== 'string') {
     throw new ValidationError('Invalid message type. Must be "text" or "template"');
   }
+
+  // Get WhatsApp client for the authenticated user
+  const whatsappClient = await getWhatsAppClientForUser(req.user.userId);
+
   if (type === 'text') {
     // Validate text message payload
     const { error, value } = sendTextMessageSchema.validate(req.body);
@@ -96,10 +117,11 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
     }
 
     logger.info('Sending text message', {
+      userId: req.user.userId,
       to: value.to.slice(-4), // Only log last 4 digits for privacy
     });
 
-    const result = await getWhatsAppClient().sendTextMessage({
+    const result = await whatsappClient.sendTextMessage({
       to: value.to,
       body: value.body,
       previewUrl: value.previewUrl,
@@ -122,11 +144,12 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
     }
 
     logger.info('Sending template message', {
+      userId: req.user.userId,
       to: value.to.slice(-4), // Only log last 4 digits for privacy
       template: value.templateName,
     });
 
-    const result = await getWhatsAppClient().sendTemplateMessage({
+    const result = await whatsappClient.sendTemplateMessage({
       to: value.to,
       templateName: value.templateName,
       languageCode: value.languageCode,
@@ -151,8 +174,10 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
  * /whatsapp/status:
  *   get:
  *     summary: WhatsApp service health check
- *     description: Verify WhatsApp API connectivity and credentials
+ *     description: Verify WhatsApp API connectivity and credentials for authenticated user
  *     tags: [WhatsApp]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Service is healthy
@@ -174,12 +199,19 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
  *                       type: boolean
  *                     phoneNumber:
  *                       type: object
+ *       401:
+ *         description: Not authenticated
  *       503:
  *         description: Service is unavailable
  */
-export const getWhatsAppStatus = async (_req: Request, res: Response): Promise<void> => {
+export const getWhatsAppStatus = async (req: Request, res: Response): Promise<void> => {
   try {
-    const isConnected = await getWhatsAppClient().checkConnectivity();
+    if (!req.user) {
+      throw new UnauthorizedError('Authentication required');
+    }
+
+    const whatsappClient = await getWhatsAppClientForUser(req.user.userId);
+    const isConnected = await whatsappClient.checkConnectivity();
 
     if (!isConnected) {
       res.status(503).json({
@@ -192,7 +224,7 @@ export const getWhatsAppStatus = async (_req: Request, res: Response): Promise<v
       return;
     }
 
-    const phoneNumberInfo = await getWhatsAppClient().getPhoneNumberInfo();
+    const phoneNumberInfo = await whatsappClient.getPhoneNumberInfo();
 
     res.status(200).json({
       success: true,

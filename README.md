@@ -184,9 +184,132 @@ FRONTEND_URL=http://localhost:3000
 BACKEND_URL=http://localhost:3000
 ```
 
-## WhatsApp Cloud API
+## WhatsApp Cloud API - Multi-Tenant Mode
 
-This application integrates with the official WhatsApp Cloud API for compliant, spam-safe messaging.
+This application operates in **multi-tenant mode**, where each user connects their own WhatsApp Business Account credentials. This enables true SaaS functionality where multiple users can use the platform with their own WhatsApp numbers.
+
+### Architecture
+
+```
+User A → WABA ID: 111, Phone: +1-555-0001 → Sends from their number
+User B → WABA ID: 222, Phone: +1-555-0002 → Sends from their number
+User C → WABA ID: 333, Phone: +1-555-0003 → Sends from their number
+```
+
+### Connection Flow
+
+1. **User Registration & Login**
+   - Register a new account: `POST /api/v1/auth/register`
+   - Verify email (check your inbox)
+   - Login: `POST /api/v1/auth/login`
+
+2. **Obtain WhatsApp Business Account Credentials**
+   
+   Follow the [WhatsApp Setup Guide](docs/WHATSAPP_SETUP.md) to:
+   - Create/access your Meta Business Manager account
+   - Create a WhatsApp Business Account (WABA)
+   - Add a phone number
+   - Create a System User
+   - Generate a permanent access token with required permissions:
+     - `whatsapp_business_messaging`
+     - `whatsapp_business_management`
+   - Note your credentials:
+     - `wabaId` (WhatsApp Business Account ID)
+     - `phoneNumberId` (Phone Number ID)
+     - `accessToken` (Permanent access token)
+
+3. **Connect WhatsApp Business Account**
+
+   ```bash
+   curl -X POST http://localhost:3000/api/v1/users/connect-whatsapp \
+     -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "wabaId": "123456789",
+       "phoneNumberId": "987654321",
+       "accessToken": "EAATaDzTD97ABQb..."
+     }'
+   ```
+
+   The system will:
+   - Validate credentials with WhatsApp API
+   - Encrypt and store your access token
+   - Retrieve account information (phone number, quality rating, messaging limits)
+   - Subscribe to webhooks
+   - Return connection status
+
+4. **Check Connection Status**
+
+   ```bash
+   curl -X GET http://localhost:3000/api/v1/users/me/whatsapp \
+     -H "Authorization: Bearer YOUR_JWT_TOKEN"
+   ```
+
+5. **Send Messages**
+
+   Once connected, you can send messages from your WhatsApp number:
+
+   ```bash
+   curl -X POST http://localhost:3000/api/v1/messages/send \
+     -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "type": "text",
+       "to": "+14155238886",
+       "body": "Hello from my WhatsApp Business!"
+     }'
+   ```
+
+### WhatsApp Connection API
+
+- `POST /api/v1/users/connect-whatsapp` - Connect WhatsApp Business Account
+- `GET /api/v1/users/me/whatsapp` - Get connection status
+- `DELETE /api/v1/users/me/whatsapp` - Disconnect account
+
+### Environment Configuration
+
+For multi-tenant mode, only these global WhatsApp settings are needed:
+
+```env
+# WhatsApp API Configuration
+WHATSAPP_API_VERSION=v18.0
+WHATSAPP_APP_SECRET=your_app_secret  # For webhook verification
+
+# Per-user credentials are stored in the database (encrypted)
+```
+
+### Security Features
+
+- ✅ **Access Token Encryption**: All tokens are encrypted using AES-256-GCM before storage
+- ✅ **Credential Validation**: Credentials are validated with WhatsApp API before storing
+- ✅ **Duplicate Prevention**: Each phone number can only be connected to one account
+- ✅ **Rate Limiting**: Connection endpoint limited to 5 attempts per hour
+- ✅ **Multi-Tenant Isolation**: Users can only access their own data and credentials
+- ✅ **Secure Responses**: Access tokens are never exposed in API responses or logs
+
+### Troubleshooting
+
+**Error: "Invalid access token or insufficient permissions"**
+- Verify your access token has the required permissions
+- Ensure the token is permanent, not temporary
+- Check that the token hasn't expired or been revoked
+
+**Error: "Invalid phone number ID"**
+- Verify the phone number ID matches your WhatsApp Business Account
+- Ensure the phone number is properly configured in Meta Business Manager
+
+**Error: "This WhatsApp phone number is already connected to another account"**
+- Each WhatsApp phone number can only be connected to one user account
+- Disconnect from the other account first, or use a different phone number
+
+For more details, see the [WhatsApp Setup Guide](docs/WHATSAPP_SETUP.md).
+
+## WhatsApp Features (Legacy Single-Tenant Documentation)
+
+> **Note**: The application now operates in multi-tenant mode. The information below is for reference only.
+
+<details>
+<summary>Click to view legacy documentation</summary>
 
 ### Quick Start
 
@@ -208,11 +331,13 @@ This application integrates with the official WhatsApp Cloud API for compliant, 
 
 3. **Test the Integration**:
    ```bash
-   # Check WhatsApp service status
-   curl http://localhost:3000/api/v1/whatsapp/status
+   # Check WhatsApp service status (requires authentication)
+   curl http://localhost:3000/api/v1/whatsapp/status \
+     -H "Authorization: Bearer YOUR_JWT_TOKEN"
 
-   # Send a test message
+   # Send a test message (requires authentication and WhatsApp connection)
    curl -X POST http://localhost:3000/api/v1/messages/send \
+     -H "Authorization: Bearer YOUR_JWT_TOKEN" \
      -H "Content-Type: application/json" \
      -d '{
        "type": "text",
@@ -223,10 +348,12 @@ This application integrates with the official WhatsApp Cloud API for compliant, 
 
 ### Available Endpoints
 
-- `GET /api/v1/whatsapp/status` - Check WhatsApp connectivity and phone number status
-- `POST /api/v1/messages/send` - Send text or template messages
+- `GET /api/v1/whatsapp/status` - Check WhatsApp connectivity and phone number status (authenticated)
+- `POST /api/v1/messages/send` - Send text or template messages (authenticated, requires WhatsApp connection)
 - `GET /webhooks/whatsapp` - Webhook verification endpoint
 - `POST /webhooks/whatsapp` - Receive message status updates and incoming messages
+
+</details>
 
 ## Template Management
 

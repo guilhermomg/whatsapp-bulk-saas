@@ -9,7 +9,12 @@ export function sanitizeUser(
   user: User,
 ): Omit<
   User,
-  'password' | 'emailVerificationToken' | 'passwordResetToken' | 'passwordResetExpires'
+  | 'password'
+  | 'emailVerificationToken'
+  | 'passwordResetToken'
+  | 'passwordResetExpires'
+  | 'accessToken'
+  | 'webhookVerifyToken'
   > {
   // Destructure to exclude sensitive fields (intentionally unused)
   const {
@@ -17,6 +22,8 @@ export function sanitizeUser(
     emailVerificationToken: UNUSED_EVT, // eslint-disable-line @typescript-eslint/no-unused-vars
     passwordResetToken: UNUSED_PRT, // eslint-disable-line @typescript-eslint/no-unused-vars
     passwordResetExpires: UNUSED_PRE, // eslint-disable-line @typescript-eslint/no-unused-vars
+    accessToken: UNUSED_AT, // eslint-disable-line @typescript-eslint/no-unused-vars
+    webhookVerifyToken: UNUSED_WVT, // eslint-disable-line @typescript-eslint/no-unused-vars
     ...safeUser
   } = user;
 

@@ -1,5 +1,33 @@
 import Joi from 'joi';
 
+/**
+ * Schema for connecting WhatsApp Business Account
+ */
+export const connectWhatsAppSchema = Joi.object({
+  wabaId: Joi.string()
+    .min(1)
+    .required()
+    .messages({
+      'string.empty': 'WhatsApp Business Account ID is required',
+      'any.required': 'WhatsApp Business Account ID is required',
+    }),
+  phoneNumberId: Joi.string()
+    .min(1)
+    .required()
+    .messages({
+      'string.empty': 'Phone Number ID is required',
+      'any.required': 'Phone Number ID is required',
+    }),
+  accessToken: Joi.string()
+    .min(20)
+    .required()
+    .messages({
+      'string.empty': 'Access Token is required',
+      'string.min': 'Access Token is invalid',
+      'any.required': 'Access Token is required',
+    }),
+});
+
 export const sendTextMessageSchema = Joi.object({
   type: Joi.string().valid('text').required(),
   to: Joi.string()
