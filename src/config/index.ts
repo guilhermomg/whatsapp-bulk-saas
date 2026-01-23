@@ -32,6 +32,7 @@ interface Config {
     user: string;
     password: string;
     secure: boolean;
+    brevoApiKey?: string;
   };
   app: {
     frontendUrl: string;
@@ -73,6 +74,7 @@ const config: Config = {
     user: process.env.EMAIL_USER || '',
     password: process.env.EMAIL_PASSWORD || '',
     secure: process.env.EMAIL_SECURE === 'true',
+    brevoApiKey: process.env.BREVO_API_KEY,
   },
   app: {
     frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
