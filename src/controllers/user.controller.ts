@@ -4,7 +4,7 @@ import { sanitizeUser } from '../utils/sanitizeUser';
 import { changePasswordSchema, updateProfileSchema } from '../validators/authValidator';
 import { BadRequestError, UnauthorizedError, NotFoundError } from '../utils/errors';
 import logger from '../config/logger';
-import prisma from '../../prisma.config';
+import prisma from '../prisma.config';
 
 /**
  * Get user profile
