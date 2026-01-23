@@ -100,7 +100,9 @@ export async function sendVerificationEmail(
   verificationToken: string,
   userName?: string,
 ): Promise<void> {
-  logger.info('Attempting to send verification email', { email, userName, hasBrevoClient: !!brevoClient, hasTransporter: !!transporter });
+  logger.info('Attempting to send verification email', {
+    email, userName, hasBrevoClient: !!brevoClient, hasTransporter: !!transporter,
+  });
 
   const verificationUrl = `${config.app.backendUrl}/api/v1/auth/verify-email?token=${verificationToken}`;
   logger.info('Verification URL generated', { url: verificationUrl });
@@ -153,7 +155,7 @@ export async function sendVerificationEmail(
       const result = await brevoClient.sendTransacEmail(sendSmtpEmail);
       logger.info('Verification email sent successfully via Brevo API', {
         email,
-        messageId: result.response.body.messageId,
+        messageId: (result.body as any)?.messageId || 'unknown',
       });
       return;
     } catch (error) {
