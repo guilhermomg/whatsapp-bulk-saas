@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import { User } from '@prisma/client';
 import logger from '../../config/logger';
-import getWhatsAppConfig from '../../config/whatsapp';
+import { decrypt } from '../../utils/encryption';
 import {
   WhatsAppError,
   WhatsAppAuthError,
@@ -25,6 +26,7 @@ interface PhoneNumberInfo {
   display_phone_number: string;
   quality_rating: string;
   id: string;
+  messaging_limit_tier?: string;
 }
 
 interface BusinessProfile {
@@ -59,34 +61,64 @@ interface SendTemplateMessageParams {
   components?: TemplateComponent[];
 }
 
+/**
+ * WhatsAppClient - Multi-tenant WhatsApp Cloud API client
+ * Each instance is created with user-specific credentials
+ */
 class WhatsAppClient {
   private client: AxiosInstance;
 
   private phoneNumberId: string;
 
-  private whatsappConfig: any;
+  private accessToken: string;
 
-  constructor() {
-    this.whatsappConfig = getWhatsAppConfig();
-    this.phoneNumberId = this.whatsappConfig.phoneNumberId;
+  private wabaId: string;
 
-    // Debug logging to verify config is loaded (token value is never logged)
-    logger.info('WhatsApp Client Configuration', {
-      phoneNumberId: this.whatsappConfig.phoneNumberId,
-      businessAccountId: this.whatsappConfig.businessAccountId,
-      baseUrl: this.whatsappConfig.baseUrl,
-      hasAccessToken: !!this.whatsappConfig.accessToken,
-      tokenLength: this.whatsappConfig.accessToken?.length || 0,
+  private apiVersion: string;
+
+  /**
+   * Creates a WhatsApp client for a specific user
+   * @param user - User object with WhatsApp credentials (encrypted accessToken)
+   */
+  constructor(user: User) {
+    // Validate user has required credentials
+    if (!user.phoneNumberId || !user.accessToken) {
+      throw new WhatsAppError(
+        'User does not have WhatsApp credentials configured',
+        400,
+      );
+    }
+
+    this.phoneNumberId = user.phoneNumberId;
+    this.wabaId = user.wabaId || '';
+    this.apiVersion = process.env.WHATSAPP_API_VERSION || 'v18.0';
+
+    // Decrypt access token
+    try {
+      this.accessToken = decrypt(user.accessToken);
+    } catch (error) {
+      throw new WhatsAppError(
+        'Failed to decrypt WhatsApp access token',
+        500,
+      );
+    }
+
+    // Debug logging (token value is never logged)
+    logger.info('WhatsApp Client initialized for user', {
+      userId: user.id,
+      phoneNumberId: this.phoneNumberId,
+      wabaId: this.wabaId,
+      hasAccessToken: !!this.accessToken,
     });
 
     this.client = axios.create({
-      baseURL: this.whatsappConfig.baseUrl,
-      timeout: this.whatsappConfig.timeout,
+      baseURL: `https://graph.facebook.com/${this.apiVersion}`,
+      timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
       },
       params: {
-        access_token: this.whatsappConfig.accessToken,
+        access_token: this.accessToken,
       },
     });
 
@@ -225,6 +257,9 @@ class WhatsAppClient {
     requestFn: () => Promise<T>,
     attempt: number = 0,
   ): Promise<T> {
+    const retryAttempts = 5;
+    const retryDelays = [1000, 2000, 4000, 8000, 16000];
+
     try {
       return await requestFn();
     } catch (error) {
@@ -238,8 +273,8 @@ class WhatsAppClient {
       }
 
       // Retry on rate limit or network errors
-      if (attempt < this.whatsappConfig.retryAttempts - 1) {
-        const delay = this.whatsappConfig.retryDelays[attempt];
+      if (attempt < retryAttempts - 1) {
+        const delay = retryDelays[attempt];
         logger.warn(`Retrying WhatsApp API request in ${delay}ms (attempt ${attempt + 1})`, {
           error: error instanceof Error ? error.message : String(error),
         });
@@ -324,7 +359,7 @@ class WhatsAppClient {
     return this.retryRequest(async () => {
       const response = await this.client.get<PhoneNumberInfo>(`/${this.phoneNumberId}`, {
         params: {
-          fields: 'verified_name,display_phone_number,quality_rating',
+          fields: 'verified_name,display_phone_number,quality_rating,messaging_limit_tier',
         },
       });
       return response.data;
