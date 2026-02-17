@@ -28,7 +28,7 @@ import {
 } from '../utils/errors';
 import logger from '../config/logger';
 import { encrypt } from '../utils/encryption';
-import prisma from '../prisma.config';
+import prisma from '../utils/prisma';
 
 const ACCOUNT_LOCK_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 const MAX_LOGIN_ATTEMPTS = 5;

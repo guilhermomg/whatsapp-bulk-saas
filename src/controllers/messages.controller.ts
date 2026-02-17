@@ -3,7 +3,7 @@ import logger from '../config/logger';
 import WhatsAppClient from '../services/whatsapp/whatsappClient';
 import { sendTextMessageSchema, sendTemplateMessageSchema } from '../validators/whatsapp.validator';
 import { ValidationError, UnauthorizedError } from '../utils/errors';
-import prisma from '../../prisma.config';
+import prisma from '../utils/prisma';
 
 /**
  * Get WhatsApp client for the authenticated user
