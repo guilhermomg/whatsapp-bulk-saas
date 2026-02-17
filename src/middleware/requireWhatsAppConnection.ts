@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { BadRequestError, UnauthorizedError } from '../utils/errors';
-import prisma from '../../prisma.config';
+import prisma from '../utils/prisma';
 
 /**
  * Middleware to require WhatsApp Business Account connection

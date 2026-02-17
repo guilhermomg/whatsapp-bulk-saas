@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ForbiddenError } from '../utils/errors';
 import logger from '../config/logger';
-import prisma from '../prisma.config';
+import prisma from '../utils/prisma';
 
 /**
  * Middleware to require email verification

@@ -9,7 +9,7 @@ import {
   ConflictError,
 } from '../utils/errors';
 import logger from '../config/logger';
-import prisma from '../prisma.config';
+import prisma from '../utils/prisma';
 
 /**
  * Get user profile

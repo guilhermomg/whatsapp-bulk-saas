@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 const { PrismaClient } = require('@prisma/client');
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 
 const prisma = new PrismaClient();
 
@@ -9,14 +10,14 @@ function encrypt(text) {
   const key = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
   const iv = crypto.randomBytes(16);
   const algorithm = 'aes-256-gcm';
-  
+
   const keyBuffer = key.length === 64 ? Buffer.from(key, 'hex') : crypto.pbkdf2Sync(key, crypto.randomBytes(64), 100000, 32, 'sha512');
   const cipher = crypto.createCipheriv(algorithm, keyBuffer, iv);
-  
+
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   const tag = cipher.getAuthTag();
-  
+
   return `${iv.toString('hex')}:${encrypted}:${tag.toString('hex')}`;
 }
 
@@ -25,9 +26,12 @@ async function main() {
 
   // Create a sample user
   console.log('Creating sample user...');
+  const hashedPassword = await bcrypt.hash('DemoPassword123!', 12);
+
   const user = await prisma.user.create({
     data: {
       email: 'demo@whatsapp-saas.com',
+      password: hashedPassword,
       businessName: 'Demo Business',
       wabaId: '123456789',
       phoneNumberId: '987654321',
@@ -35,6 +39,7 @@ async function main() {
       webhookVerifyToken: encrypt('SAMPLE_WEBHOOK_TOKEN'),
       subscriptionTier: 'pro',
       isActive: true,
+      emailVerified: true,
     },
   });
   console.log(`✅ Created user: ${user.email}`);
@@ -42,7 +47,7 @@ async function main() {
   // Create sample contacts
   console.log('Creating sample contacts...');
   const contacts = [];
-  
+
   // 5 opted-in contacts
   for (let i = 1; i <= 5; i++) {
     contacts.push({
@@ -80,7 +85,7 @@ async function main() {
 
   // Create approved templates
   console.log('Creating sample templates...');
-  
+
   const template1 = await prisma.template.create({
     data: {
       userId: user.id,
@@ -108,9 +113,9 @@ async function main() {
       status: 'approved',
       components: {
         header: { type: 'text', text: 'Order Confirmation' },
-        body: { 
-          type: 'text', 
-          text: 'Your order {{1}} has been confirmed. Expected delivery: {{2}}' 
+        body: {
+          type: 'text',
+          text: 'Your order {{1}} has been confirmed. Expected delivery: {{2}}'
         },
         footer: { type: 'text', text: 'Thank you for your business!' },
       },
@@ -122,7 +127,7 @@ async function main() {
 
   // Create a test campaign
   console.log('Creating sample campaign...');
-  
+
   const campaign = await prisma.campaign.create({
     data: {
       userId: user.id,
@@ -146,7 +151,7 @@ async function main() {
 
   // Create sample messages for the campaign
   console.log('Creating sample messages...');
-  
+
   const optedInContacts = await prisma.contact.findMany({
     where: { userId: user.id, optedIn: true },
     take: 3,
@@ -172,7 +177,7 @@ async function main() {
 
   // Create sample webhook events
   console.log('Creating sample webhook events...');
-  
+
   const firstMessage = await prisma.message.findFirst({
     where: { campaignId: campaign.id },
   });
