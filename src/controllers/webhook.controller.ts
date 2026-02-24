@@ -11,6 +11,7 @@ import {
   webhookVerificationSchema,
   webhookEventSchema,
 } from '../validators/whatsapp.validator';
+import { WhatsAppTemplateService } from '../services/whatsAppTemplateService';
 
 /**
  * @swagger
@@ -103,6 +104,8 @@ export const verifyWebhook = async (req: Request, res: Response): Promise<void> 
  */
 export const handleWebhookEvent = async (req: Request, res: Response): Promise<void> => {
   try {
+    const whatsAppTemplateService = new WhatsAppTemplateService();
+    
     // Verify webhook signature
     const signature = req.headers['x-hub-signature-256'] as string;
     // Use the raw body captured by captureRawBody middleware
@@ -134,7 +137,12 @@ export const handleWebhookEvent = async (req: Request, res: Response): Promise<v
       id: string;
       changes: Array<{
         value: {
-          metadata: { phone_number_id: string };
+          event?: string;
+          message_template_id?: string;
+          message_template_name?: string;
+          status?: string;
+          rejection_reason?: string;
+          metadata?: { phone_number_id: string };
           messages?: Array<{ id: string; from: string; type: string; text?: { body: string } }>;
           statuses?: Array<{
             id: string;
@@ -145,15 +153,44 @@ export const handleWebhookEvent = async (req: Request, res: Response): Promise<v
         };
       }>;
     }) => {
-      entryItem.changes.forEach((change) => {
+      entryItem.changes.forEach(async (change) => {
         const { value: changeValue } = change;
+
+        // Handle template status updates
+        if (changeValue.event === 'message_template_status_update') {
+          const templateId = changeValue.message_template_id;
+          const templateName = changeValue.message_template_name;
+          const status = changeValue.status || 'PENDING';
+          const rejectionReason = changeValue.rejection_reason;
+
+          logger.info('Template status update received', {
+            templateId,
+            templateName,
+            status,
+            rejectionReason,
+          });
+
+          try {
+            await whatsAppTemplateService.handleTemplateStatusUpdate({
+              whatsappTemplateId: templateId || '',
+              status: status as any,
+              rejectionReason: rejectionReason || undefined,
+            });
+          } catch (templateError) {
+            logger.error('Error processing template status update:', templateError);
+          }
+
+          return; // Don't process as regular message/status webhook
+        }
+
+        const phoneNumberId = changeValue.metadata?.phone_number_id || 'unknown';
         const messageIds = changeValue.messages && changeValue.messages.length > 0
           ? changeValue.messages.map((message) => message.id).join(',')
           : 'no-messages';
         const statusIds = changeValue.statuses && changeValue.statuses.length > 0
           ? changeValue.statuses.map((status) => status.id).join(',')
           : 'no-statuses';
-        const webhookId = `${entryItem.id}-${changeValue.metadata.phone_number_id}-${messageIds}-${statusIds}`;
+        const webhookId = `${entryItem.id}-${phoneNumberId}-${messageIds}-${statusIds}`;
 
         // Check for duplicate webhook (idempotency)
         if (isWebhookProcessed(webhookId)) {

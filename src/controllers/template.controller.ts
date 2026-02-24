@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { TemplateService } from '../services/templateService';
+import { WhatsAppTemplateService } from '../services/whatsAppTemplateService';
 import {
   createTemplateSchema,
   updateTemplateSchema,
@@ -11,6 +12,7 @@ import { ValidationError, BadRequestError } from '../utils/errors';
 import logger from '../config/logger';
 
 const templateService = new TemplateService();
+const whatsAppTemplateService = new WhatsAppTemplateService();
 
 /**
  * @swagger
@@ -380,6 +382,108 @@ export async function deleteTemplate(req: Request, res: Response): Promise<void>
     });
   } catch (error) {
     logger.error('Error deleting template:', error);
+    throw error;
+  }
+}
+
+/**
+ * @swagger
+ * /templates/{id}/submit:
+ *   post:
+ *     summary: Submit template to WhatsApp for approval
+ *     tags: [Templates]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - wabaId
+ *               - accessToken
+ *             properties:
+ *               wabaId:
+ *                 type: string
+ *                 description: WhatsApp Business Account ID
+ *               accessToken:
+ *                 type: string
+ *                 description: WhatsApp Business Account access token
+ *     responses:
+ *       200:
+ *         description: Template submitted successfully
+ *       400:
+ *         description: Invalid template or missing credentials
+ *       404:
+ *         description: Template not found
+ *       502:
+ *         description: WhatsApp API error
+ */
+export async function submitTemplateToWhatsApp(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  try {
+    const { id } = req.params;
+    const { userId } = req.query as { userId: string };
+    const { wabaId, accessToken } = req.body;
+
+    if (!userId) {
+      throw new BadRequestError('userId query parameter is required');
+    }
+
+    if (!wabaId) {
+      throw new BadRequestError('wabaId is required');
+    }
+
+    if (!accessToken) {
+      throw new BadRequestError('accessToken is required');
+    }
+
+    // Get template
+    const template = await templateService.getTemplateById(id, userId);
+
+    // Check if already submitted
+    if (template.status !== 'draft') {
+      throw new BadRequestError(
+        `Template must be in draft status to submit. Current status: ${template.status}`,
+      );
+    }
+
+    // Submit to WhatsApp
+    const result = await whatsAppTemplateService.submitTemplate(
+      template,
+      wabaId,
+      accessToken,
+    );
+
+    if (!result.success) {
+      throw new BadRequestError(result.error || 'Failed to submit template to WhatsApp');
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        templateId: id,
+        whatsappTemplateId: result.whatsappTemplateId,
+        status: 'pending',
+        message: 'Template submitted to WhatsApp. Approval typically takes 24-48 hours.',
+      },
+    });
+  } catch (error) {
+    logger.error('Error submitting template to WhatsApp:', error);
     throw error;
   }
 }

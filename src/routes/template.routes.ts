@@ -7,6 +7,7 @@ import {
   deleteTemplate,
   previewTemplate,
   validateTemplateParameters,
+  submitTemplateToWhatsApp,
   syncTemplates,
 } from '../controllers/template.controller';
 
@@ -21,6 +22,7 @@ router.delete('/:id', deleteTemplate);
 
 // Template Operations (must be before /:id routes to avoid conflicts)
 router.post('/sync', syncTemplates);
+router.post('/:id/submit', submitTemplateToWhatsApp);
 router.post('/:id/preview', previewTemplate);
 router.post('/:id/validate', validateTemplateParameters);
 
