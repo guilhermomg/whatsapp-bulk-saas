@@ -75,11 +75,14 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Create deployment package
+        run: zip -r app.zip .
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: backend
+          path: backend/app.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -107,6 +110,5 @@ jobs:
         with:
           app-name: 'whatsapp-backend-api'
           slot-name: 'Production'
-          package: backend
-          startup-command: 'npm start'
+          package: app.zip
           
