@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
 
-console.log('[STARTUP] Loading environment variables...');
+process.stderr.write('[STARTUP] Loading environment variables...\n');
 dotenv.config();
-console.log('[STARTUP] Environment variables loaded. NODE_ENV:', process.env.NODE_ENV, 'PORT:', process.env.PORT);
+process.stderr.write(`[STARTUP] Environment variables loaded. NODE_ENV: ${process.env.NODE_ENV}, PORT: ${process.env.PORT}\n`);
 
 import { Server } from 'http';
 import app from './app';
@@ -18,16 +18,16 @@ interface ServerModule {
 const serverModule: ServerModule = {
   server: undefined,
   startServer: () => {
-    console.log('[STARTUP] Starting server...');
+    process.stderr.write('[STARTUP] Starting server...\n');
     try {
       // Validate environment configuration before starting
-      console.log('[STARTUP] Validating environment...');
+      process.stderr.write('[STARTUP] Validating environment...\n');
       validateEnvironment();
-      console.log('[STARTUP] Environment validation passed');
+      process.stderr.write('[STARTUP] Environment validation passed\n');
 
-      console.log('[STARTUP] Listening on port', config.port);
+      process.stderr.write(`[STARTUP] Listening on port ${config.port}\n`);
       serverModule.server = app.listen(config.port, () => {
-        console.log('[STARTUP] ✓ Server listening successfully');
+        process.stderr.write('[STARTUP] ✓ Server listening successfully\n');
         logger.info(`Server running in ${config.env} mode on port ${config.port}`);
         logger.info(`API Documentation available at http://${config.host}:${config.port}/api-docs`);
         logger.info(
@@ -38,7 +38,7 @@ const serverModule: ServerModule = {
         );
       });
     } catch (error) {
-      console.error('[STARTUP ERROR]', error);
+      process.stderr.write(`[STARTUP ERROR] ${error}\n`);
       logger.error('Fatal error during server startup:', error);
       process.exit(1);
     }
