@@ -106,7 +106,13 @@ const whatsAppTemplateService = new WhatsAppTemplateService();
  */
 export async function createTemplate(req: Request, res: Response): Promise<void> {
   try {
-    const { error, value } = createTemplateSchema.validate(req.body, {
+    // Inject authenticated user ID
+    const requestData = {
+      ...req.body,
+      userId: req.user?.userId,
+    };
+
+    const { error, value } = createTemplateSchema.validate(requestData, {
       abortEarly: false,
       stripUnknown: true,
     });
@@ -227,10 +233,10 @@ export async function getTemplate(req: Request, res: Response): Promise<void> {
  */
 export async function listTemplates(req: Request, res: Response): Promise<void> {
   try {
-    const { userId } = req.query as { userId: string };
+    const userId = req.user?.userId;
 
     if (!userId) {
-      throw new BadRequestError('userId query parameter is required');
+      throw new BadRequestError('userId is required (authentication failed)');
     }
 
     // Validate query parameters

@@ -10,8 +10,12 @@ import {
   submitTemplateToWhatsApp,
   syncTemplates,
 } from '../controllers/template.controller';
+import authenticate from '../middleware/authenticate';
 
 const router = express.Router();
+
+// All template routes require authentication
+router.use(authenticate);
 
 // Template CRUD
 router.post('/', createTemplate);

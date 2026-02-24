@@ -16,8 +16,12 @@ import {
   importCsv,
   exportCsv,
 } from '../controllers/contact.controller';
+import authenticate from '../middleware/authenticate';
 
 const router = express.Router();
+
+// All contact routes require authentication
+router.use(authenticate);
 
 // Configure multer for CSV upload
 const upload = multer({

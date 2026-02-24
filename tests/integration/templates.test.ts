@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import createTestRequest, { createAuthenticatedRequest } from '../helpers/testUtils';
+import createTestRequest from '../helpers/testUtils';
 
 const prisma = new PrismaClient();
 let authToken: string;
@@ -26,8 +26,9 @@ describe('Templates API', () => {
   });
 
   it('should create a template with valid data', async () => {
-    const response = await createAuthenticatedRequest(authToken)
+    const response = await createTestRequest()
       .post('/api/v1/templates')
+      .set('Authorization', `Bearer ${authToken}`)
       .send({
         name: 'test_template',
         category: 'marketing',
@@ -39,12 +40,13 @@ describe('Templates API', () => {
       .expect(201);
 
     expect(response.body.success).toBe(true);
-    expect(response.body.data.template.name).toBe('test_template');
+    expect(response.body.data.name).toBe('test_template');
   });
 
   it('should list templates', async () => {
-    const response = await createAuthenticatedRequest(authToken)
+    const response = await createTestRequest()
       .get('/api/v1/templates')
+      .set('Authorization', `Bearer ${authToken}`)
       .expect(200);
 
     expect(response.body.success).toBe(true);
