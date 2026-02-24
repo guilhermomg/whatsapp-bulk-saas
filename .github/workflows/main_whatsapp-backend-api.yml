@@ -71,11 +71,21 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Run Prisma migrations in build
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/whatsapp_test
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: |
+            dist/
+            node_modules/
+            prisma/
+            package.json
+            package-lock.json
 
   deploy:
     runs-on: ubuntu-latest
@@ -104,4 +114,5 @@ jobs:
           app-name: 'whatsapp-backend-api'
           slot-name: 'Production'
           package: .
+          startup-command: 'npx prisma migrate deploy && npm start'
           
