@@ -23,6 +23,14 @@ export class TemplateRepository extends BaseRepository<Template> {
     });
   }
 
+  async findByWhatsAppId(whatsappTemplateId: string): Promise<Template | null> {
+    return this.prisma.template.findFirst({
+      where: {
+        whatsappTemplateId,
+      },
+    });
+  }
+
   async findAll(options?: {
     skip?: number;
     take?: number;
