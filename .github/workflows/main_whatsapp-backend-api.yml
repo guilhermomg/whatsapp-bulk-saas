@@ -101,7 +101,15 @@ jobs:
       - name: Build application
         run: npm run build
         working-directory: backend
-      
+
+      - name: Create deployment package
+        run: |
+          # Use system zip (not JS glob) so dotfiles like node_modules/.prisma/ are included
+          cd backend
+          zip -r ../deploy.zip dist node_modules package.json package-lock.json prisma
+        # Note: system 'zip -r' includes dotfiles/dot-directories (unlike JS glob **/*).
+        # This ensures node_modules/.prisma/client/ is present in the deployment.
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -115,5 +123,5 @@ jobs:
         with:
           app-name: 'whatsapp-backend-api'
           slot-name: 'Production'
-          package: backend
+          package: deploy.zip
           

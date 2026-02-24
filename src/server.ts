@@ -1,14 +1,14 @@
 import dotenv from 'dotenv';
 
-process.stderr.write('[STARTUP] Loading environment variables...\n');
-dotenv.config();
-process.stderr.write(`[STARTUP] Environment variables loaded. NODE_ENV: ${process.env.NODE_ENV}, PORT: ${process.env.PORT}\n`);
-
 import { Server } from 'http';
 import app from './app';
 import config from './config';
 import logger from './config/logger';
 import validateEnvironment from './utils/validateEnvironment';
+
+process.stderr.write('[STARTUP] Loading environment variables...\n');
+dotenv.config();
+process.stderr.write(`[STARTUP] Environment variables loaded. NODE_ENV: ${process.env.NODE_ENV}, PORT: ${process.env.PORT}\n`);
 
 interface ServerModule {
   server: Server | undefined;
