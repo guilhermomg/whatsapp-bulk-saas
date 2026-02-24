@@ -111,5 +111,5 @@ jobs:
         with:
           app-name: 'whatsapp-backend-api'
           slot-name: 'Production'
-          package: app.zip
+          package: node-app/app.zip
           
