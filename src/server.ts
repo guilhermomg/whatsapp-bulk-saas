@@ -1,6 +1,8 @@
 import dotenv from 'dotenv';
 
+console.log('[STARTUP] Loading environment variables...');
 dotenv.config();
+console.log('[STARTUP] Environment variables loaded. NODE_ENV:', process.env.NODE_ENV, 'PORT:', process.env.PORT);
 
 import { Server } from 'http';
 import app from './app';
@@ -16,19 +18,30 @@ interface ServerModule {
 const serverModule: ServerModule = {
   server: undefined,
   startServer: () => {
-    // Validate environment configuration before starting
-    validateEnvironment();
+    console.log('[STARTUP] Starting server...');
+    try {
+      // Validate environment configuration before starting
+      console.log('[STARTUP] Validating environment...');
+      validateEnvironment();
+      console.log('[STARTUP] Environment validation passed');
 
-    serverModule.server = app.listen(config.port, () => {
-      logger.info(`Server running in ${config.env} mode on port ${config.port}`);
-      logger.info(`API Documentation available at http://${config.host}:${config.port}/api-docs`);
-      logger.info(
-        `Health check available at http://${config.host}:${config.port}${config.api.prefix}/${config.api.version}/health`,
-      );
-      logger.info(
-        `WhatsApp webhook available at http://${config.host}:${config.port}/webhooks/whatsapp`,
-      );
-    });
+      console.log('[STARTUP] Listening on port', config.port);
+      serverModule.server = app.listen(config.port, () => {
+        console.log('[STARTUP] ✓ Server listening successfully');
+        logger.info(`Server running in ${config.env} mode on port ${config.port}`);
+        logger.info(`API Documentation available at http://${config.host}:${config.port}/api-docs`);
+        logger.info(
+          `Health check available at http://${config.host}:${config.port}${config.api.prefix}/${config.api.version}/health`,
+        );
+        logger.info(
+          `WhatsApp webhook available at http://${config.host}:${config.port}/webhooks/whatsapp`,
+        );
+      });
+    } catch (error) {
+      console.error('[STARTUP ERROR]', error);
+      logger.error('Fatal error during server startup:', error);
+      process.exit(1);
+    }
   },
 };
 
