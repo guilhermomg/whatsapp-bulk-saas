@@ -37,14 +37,20 @@ const format = winston.format.combine(
   }),
 );
 
-const transports = [
+const transports: winston.transport[] = [
   new winston.transports.Console(),
-  new winston.transports.File({
-    filename: `${config.logging.filePath}/error.log`,
-    level: 'error',
-  }),
-  new winston.transports.File({ filename: `${config.logging.filePath}/all.log` }),
 ];
+
+// Only use file logging in development mode
+if (config.env === 'development') {
+  transports.push(
+    new winston.transports.File({
+      filename: `${config.logging.filePath}/error.log`,
+      level: 'error',
+    }),
+    new winston.transports.File({ filename: `${config.logging.filePath}/all.log` }),
+  );
+}
 
 const logger = winston.createLogger({
   level: level(),
