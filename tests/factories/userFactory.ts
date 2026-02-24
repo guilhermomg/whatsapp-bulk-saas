@@ -1,9 +1,11 @@
-import { encrypt } from '../../src/utils/encryption';
-
 let userCounter = 0;
+
+// Pre-hashed password for "TestPassword123!" to avoid hashing in every test
+const TEST_HASHED_PASSWORD = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWO';
 
 export interface CreateUserOptions {
   email?: string;
+  password?: string;
   businessName?: string;
   wabaId?: string;
   phoneNumberId?: string;
@@ -11,6 +13,7 @@ export interface CreateUserOptions {
   webhookVerifyToken?: string;
   subscriptionTier?: 'free' | 'basic' | 'pro';
   isActive?: boolean;
+  emailVerified?: boolean;
 }
 
 /**
@@ -21,17 +24,15 @@ export function createUserData(options: CreateUserOptions = {}): any {
 
   return {
     email: options.email || `test${userCounter}@example.com`,
+    password: options.password || TEST_HASHED_PASSWORD,
     businessName: options.businessName || `Test Business ${userCounter}`,
     wabaId: options.wabaId || `waba_${userCounter}`,
     phoneNumberId: options.phoneNumberId || `phone_${userCounter}`,
-    accessToken: options.accessToken
-      ? encrypt(options.accessToken)
-      : encrypt(`test_token_${userCounter}`),
-    webhookVerifyToken: options.webhookVerifyToken
-      ? encrypt(options.webhookVerifyToken)
-      : encrypt(`webhook_token_${userCounter}`),
+    accessToken: options.accessToken || `test_token_${userCounter}`,
+    webhookVerifyToken: options.webhookVerifyToken || `webhook_token_${userCounter}`,
     subscriptionTier: options.subscriptionTier || 'free',
     isActive: options.isActive !== undefined ? options.isActive : true,
+    emailVerified: options.emailVerified !== undefined ? options.emailVerified : true,
   };
 }
 
