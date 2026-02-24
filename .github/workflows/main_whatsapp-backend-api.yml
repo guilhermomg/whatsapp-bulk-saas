@@ -13,11 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
-
-    defaults:
-      run:
-        working-directory: backend
+      contents: read
 
     services:
       postgres:
@@ -79,8 +75,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -92,23 +88,15 @@ jobs:
 
       - name: npm install
         run: npm ci
-        working-directory: backend
 
       - name: Generate Prisma Client
         run: npx prisma generate
-        working-directory: backend
 
       - name: Build application
         run: npm run build
-        working-directory: backend
 
       - name: Create deployment package
-        run: |
-          # Use system zip (not JS glob) so dotfiles like node_modules/.prisma/ are included
-          cd backend
-          zip -r ../deploy.zip dist node_modules package.json package-lock.json prisma
-        # Note: system 'zip -r' includes dotfiles/dot-directories (unlike JS glob **/*).
-        # This ensures node_modules/.prisma/client/ is present in the deployment.
+        run: zip -r deploy.zip dist node_modules package.json package-lock.json prisma
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -117,11 +105,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0D77C312CCC14D3E8FC996BFF190F5B9 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_544C2CAE4E584055867732A7BCAB7A58 }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'whatsapp-backend-api'
           slot-name: 'Production'
           package: deploy.zip
-          
