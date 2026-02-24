@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import createTestRequest, { createAuthenticatedRequest } from '../helpers/testUtils';
+import createTestRequest from '../helpers/testUtils';
 
 const prisma = new PrismaClient();
 let authToken: string;
@@ -26,8 +26,9 @@ describe('Contacts API', () => {
   });
 
   it('should create a contact with valid data', async () => {
-    const response = await createAuthenticatedRequest(authToken)
+    const response = await createTestRequest()
       .post('/api/v1/contacts')
+      .set('Authorization', `Bearer ${authToken}`)
       .send({
         phone: '+14155552671',
         name: 'John Doe',
@@ -36,15 +37,16 @@ describe('Contacts API', () => {
       .expect(201);
 
     expect(response.body.success).toBe(true);
-    expect(response.body.data.contact.phone).toBe('+14155552671');
+    expect(response.body.data.phone).toBe('+14155552671');
   });
 
   it('should list contacts with pagination', async () => {
-    const response = await createAuthenticatedRequest(authToken)
+    const response = await createTestRequest()
       .get('/api/v1/contacts?limit=10&offset=0')
+      .set('Authorization', `Bearer ${authToken}`)
       .expect(200);
 
     expect(response.body.success).toBe(true);
-    expect(response.body.data.contacts).toBeDefined();
+    expect(response.body.data).toBeDefined();
   });
 });

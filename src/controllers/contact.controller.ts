@@ -74,7 +74,13 @@ const csvService = new CsvService();
  */
 export async function createContact(req: Request, res: Response): Promise<void> {
   try {
-    const { error, value } = createContactSchema.validate(req.body, {
+    // Inject authenticated user ID
+    const requestData = {
+      ...req.body,
+      userId: req.user?.userId,
+    };
+
+    const { error, value } = createContactSchema.validate(requestData, {
       abortEarly: false,
       stripUnknown: true,
     });
@@ -193,10 +199,10 @@ export async function getContact(req: Request, res: Response): Promise<void> {
  */
 export async function listContacts(req: Request, res: Response): Promise<void> {
   try {
-    const { userId } = req.query as { userId: string };
+    const userId = req.user?.userId;
 
     if (!userId) {
-      throw new BadRequestError('userId query parameter is required');
+      throw new BadRequestError('userId is required (authentication failed)');
     }
 
     // Validate query parameters

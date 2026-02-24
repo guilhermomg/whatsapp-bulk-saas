@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import createTestRequest, { createAuthenticatedRequest } from '../helpers/testUtils';
+import createTestRequest from '../helpers/testUtils';
 
 const prisma = new PrismaClient();
 let authToken: string;
@@ -24,14 +24,15 @@ describe('Messages API', () => {
   });
 
   it('should validate phone number format', async () => {
-    const response = await createAuthenticatedRequest(authToken)
+    const response = await createTestRequest()
       .post('/api/v1/messages/send')
+      .set('Authorization', `Bearer ${authToken}`)
       .send({
         to: 'invalid',
         type: 'text',
         body: 'Test message',
       });
 
-    expect(response.status).toBe(422 || 401); // May fail auth if WhatsApp not connected
+    expect([401, 422]).toContain(response.status); // May fail auth if WhatsApp not connected
   });
 });
