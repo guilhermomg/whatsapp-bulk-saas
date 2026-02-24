@@ -15,6 +15,21 @@ jobs:
     permissions:
       contents: read #This is required for actions/checkout
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: whatsapp_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -23,11 +38,38 @@ jobs:
         with:
           node-version: '20.x'
 
-      - name: npm install, build, and test
-        run: |
-          npm install
-          npm run build --if-present
-          npm run test --if-present
+      - name: npm install
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/whatsapp_test
+
+      - name: Run database migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/whatsapp_test
+
+      - name: Run tests
+        run: npm test
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://test:test@localhost:5432/whatsapp_test
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          WHATSAPP_API_URL: https://graph.facebook.com/v21.0
+          WHATSAPP_ACCESS_TOKEN: test-token
+          WHATSAPP_PHONE_NUMBER_ID: test-phone-id
+          WHATSAPP_BUSINESS_ACCOUNT_ID: test-account-id
+          WHATSAPP_VERIFY_TOKEN: test-verify-token
+          WHATSAPP_WEBHOOK_SECRET: test-webhook-secret
+          BREVO_API_KEY: test-brevo-key
+          BREVO_SENDER_EMAIL: test@example.com
+          BREVO_SENDER_NAME: Test
+
+      - name: Build application
+        run: npm run build
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
