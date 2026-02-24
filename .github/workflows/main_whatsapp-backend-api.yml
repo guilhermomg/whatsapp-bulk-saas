@@ -75,8 +75,9 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Create deployment package
-        run: zip -r app.zip .
+      - name: Create deployment package  
+        # Running in backend/ directory; include node_modules, dist, and all necessary files for deployment
+        run: zip -r app.zip . -x ".git/*" "logs/*" ".DS_Store" "*.zip" "tests/*" ".gitignore"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
