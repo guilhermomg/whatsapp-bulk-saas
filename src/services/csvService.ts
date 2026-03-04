@@ -40,7 +40,37 @@ export class CsvService {
   }
 
   /**
+   * Detect if the first row is a header row or data
+   * Headers are identified by checking if they match known column names
+   * or if the first column doesn't look like a phone number (for data-only CSVs)
+   */
+  private detectHasHeaders(firstRow: string): boolean {
+    const columns = firstRow.split(',').map((col) => col.trim().toLowerCase());
+
+    // Known header names
+    const knownHeaders = ['phone', 'name', 'email', 'tags', 'opt_in_source', 'opt-in-source', 'optin_source'];
+
+    // If any column matches known headers, it's likely a header row
+    const hasKnownHeader = columns.some(
+      (col) => knownHeaders.some((h) => col === h || col.includes(h)),
+    );
+    if (hasKnownHeader) {
+      return true;
+    }
+
+    // If first column doesn't start with +, it's likely a name (header row)
+    if (columns[0] && !columns[0].startsWith('+') && !/^\d+/.test(columns[0])) {
+      // Additional check: if it looks like text and not a number, it's probably a header
+      return !/^\+?\d/.test(columns[0]);
+    }
+
+    // If first column starts with +, it's data (phone number)
+    return false;
+  }
+
+  /**
    * Parse and validate CSV content
+   * Handles both CSV with headers and headerless CSV (assumes: name, phone, email column order)
    */
   private async parseCsvContent(
     buffer: Buffer,
@@ -49,67 +79,91 @@ export class CsvService {
     const errors: CsvImportError[] = [];
 
     return new Promise((resolve, reject) => {
-      const parser = parse({
-        columns: true,
-        skip_empty_lines: true,
-        trim: true,
-        cast: false,
-      });
+      try {
+        // Convert buffer to string and split into lines
+        let content = buffer.toString('utf-8').trim();
+        const lines = content.split('\n');
 
-      let rowNumber = 1; // Header is row 0
+        if (lines.length === 0) {
+          resolve({ rows, errors });
+          return;
+        }
 
-      parser.on('readable', () => {
-        let record: any;
-        // eslint-disable-next-line no-cond-assign
-        while ((record = parser.read()) !== null) {
-          rowNumber += 1;
+        // Check if first row contains headers
+        const hasHeaders = this.detectHasHeaders(lines[0]);
 
-          try {
-            // Parse tags if it's a string
-            if (record.tags && typeof record.tags === 'string') {
-              // Split by comma and clean up
-              record.tags = record.tags
-                .split(',')
-                .map((tag: string) => tag.trim())
-                .filter((tag: string) => tag.length > 0);
-            }
+        // If no headers, prepend default header row
+        if (!hasHeaders) {
+          content = `name,phone,email\n${content}`;
+          logger.info('No headers detected in CSV, using default column order: name, phone, email');
+        } else {
+          logger.info('Headers detected in CSV');
+        }
 
-            // Validate row
-            const { error, value } = csvRowSchema.validate(record, {
-              abortEarly: false,
-              stripUnknown: true,
-            });
+        const parser = parse({
+          columns: true,
+          skip_empty_lines: true,
+          trim: true,
+          cast: false,
+        });
 
-            if (error) {
+        let rowNumber = hasHeaders ? 1 : 0; // Adjust for injected header
+
+        parser.on('readable', () => {
+          let record: any;
+          // eslint-disable-next-line no-cond-assign
+          while ((record = parser.read()) !== null) {
+            rowNumber += 1;
+
+            try {
+              // Parse tags if it's a string
+              if (record.tags && typeof record.tags === 'string') {
+                // Split by comma and clean up
+                record.tags = record.tags
+                  .split(',')
+                  .map((tag: string) => tag.trim())
+                  .filter((tag: string) => tag.length > 0);
+              }
+
+              // Validate row
+              const { error, value } = csvRowSchema.validate(record, {
+                abortEarly: false,
+                stripUnknown: true,
+              });
+
+              if (error) {
+                errors.push({
+                  row: rowNumber,
+                  phone: record.phone,
+                  error: error.details.map((d) => d.message).join(', '),
+                });
+              } else {
+                rows.push(value);
+              }
+            } catch (err) {
               errors.push({
                 row: rowNumber,
                 phone: record.phone,
-                error: error.details.map((d) => d.message).join(', '),
+                error: err instanceof Error ? err.message : 'Validation error',
               });
-            } else {
-              rows.push(value);
             }
-          } catch (err) {
-            errors.push({
-              row: rowNumber,
-              phone: record.phone,
-              error: err instanceof Error ? err.message : 'Validation error',
-            });
           }
-        }
-      });
+        });
 
-      parser.on('error', (err) => {
-        reject(new Error(`CSV parsing error: ${err.message}`));
-      });
+        parser.on('error', (err) => {
+          reject(new Error(`CSV parsing error: ${err.message}`));
+        });
 
-      parser.on('end', () => {
-        resolve({ rows, errors });
-      });
+        parser.on('end', () => {
+          resolve({ rows, errors });
+        });
 
-      // Write buffer to parser
-      parser.write(buffer);
-      parser.end();
+        // Write content to parser
+        parser.write(content);
+        parser.end();
+      } catch (err) {
+        reject(err);
+      }
     });
   }
 
