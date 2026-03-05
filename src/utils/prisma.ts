@@ -20,6 +20,9 @@ const prismaClientSingleton = () => new PrismaClient({
   log: config.env === 'development'
     ? ['query', 'error', 'warn']
     : ['error'],
+  transactionOptions: {
+    timeout: 120000,
+  },
 });
 
 const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
