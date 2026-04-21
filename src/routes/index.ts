@@ -7,6 +7,7 @@ import tagsRoutes from './tags.routes';
 import templateRoutes from './template.routes';
 import authRoutes from './auth.routes';
 import userRoutes from './user.routes';
+import campaignRoutes from './campaign.routes';
 
 const router = express.Router();
 
@@ -18,5 +19,6 @@ router.use('/whatsapp', whatsappRoutes);
 router.use('/contacts', contactRoutes);
 router.use('/tags', tagsRoutes);
 router.use('/templates', templateRoutes);
+router.use('/campaigns', campaignRoutes);
 
 export default router;

@@ -12,6 +12,8 @@ import {
 import { TEMPLATE_LIMITS } from '../constants/templateConstants';
 import logger from '../config/logger';
 
+export const SENDABLE_TEMPLATE_STATUSES: TemplateStatus[] = ['draft', 'approved'];
+
 interface TemplateComponents {
   header?: {
     type: string;

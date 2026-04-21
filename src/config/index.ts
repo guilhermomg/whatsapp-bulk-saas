@@ -77,7 +77,7 @@ const config: Config = {
     brevoApiKey: process.env.BREVO_API_KEY,
   },
   app: {
-    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3001',
     backendUrl: process.env.BACKEND_URL || 'http://localhost:3000',
   },
 };
