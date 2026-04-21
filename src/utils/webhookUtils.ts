@@ -49,18 +49,3 @@ export const verifyWebhookSignature = (signature: string, body: string): boolean
 export const extractPhoneFromWebhook = (entry: {
   changes: Array<{ value: { metadata: { display_phone_number: string } } }>;
 }): string => entry.changes[0]?.value?.metadata?.display_phone_number || '';
-
-/**
- * Check if webhook event is a duplicate (for idempotency)
- * This is a simple in-memory implementation. In production, use Redis or database
- */
-const processedWebhooks = new Set<string>();
-
-export const isWebhookProcessed = (webhookId: string): boolean => processedWebhooks.has(webhookId);
-
-export const markWebhookAsProcessed = (webhookId: string): void => {
-  processedWebhooks.add(webhookId);
-
-  // Clean up old entries after 1 hour (simple memory management)
-  setTimeout(() => processedWebhooks.delete(webhookId), 3600000);
-};

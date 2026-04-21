@@ -1,17 +1,166 @@
 import { Request, Response } from 'express';
+import { Prisma, MessageStatus } from '@prisma/client';
 import logger from '../config/logger';
 import getWhatsAppConfig from '../config/whatsapp';
 import { BadRequestError, UnauthorizedError } from '../utils/errors';
-import {
-  verifyWebhookSignature,
-  isWebhookProcessed,
-  markWebhookAsProcessed,
-} from '../utils/webhookUtils';
+import { verifyWebhookSignature } from '../utils/webhookUtils';
 import {
   webhookVerificationSchema,
   webhookEventSchema,
 } from '../validators/whatsapp.validator';
 import { WhatsAppTemplateService } from '../services/whatsAppTemplateService';
+import messageRepo from '../repositories/messageRepository';
+import campaignRepo from '../repositories/campaignRepository';
+import webhookEventRepo from '../repositories/webhookEventRepository';
+
+type WhatsAppStatus = 'sent' | 'delivered' | 'read' | 'failed';
+
+type WebhookStatus = {
+  id: string;
+  status: WhatsAppStatus;
+  timestamp: string;
+  recipient_id: string;
+  errors?: Array<{ code: number; title: string }>;
+};
+
+type WebhookChangeValue = {
+  event?: string;
+  message_template_id?: string;
+  message_template_name?: string;
+  status?: string;
+  rejection_reason?: string;
+  messaging_product?: string;
+  metadata?: { phone_number_id: string; display_phone_number?: string };
+  messages?: Array<{ id: string; from: string; type: string; text?: { body: string } }>;
+  statuses?: WebhookStatus[];
+};
+
+type WebhookEntry = {
+  id: string;
+  changes: Array<{ field: string; value: WebhookChangeValue }>;
+};
+
+const WHATSAPP_STATUS_MAP: Record<string, MessageStatus | undefined> = {
+  sent: 'sent',
+  delivered: 'delivered',
+  read: 'read',
+  failed: 'failed',
+};
+
+const mapWhatsAppStatus = (status: string): MessageStatus | null => (
+  WHATSAPP_STATUS_MAP[status] ?? null
+);
+
+const processStatusUpdate = async (status: WebhookStatus): Promise<void> => {
+  const mappedStatus = mapWhatsAppStatus(status.status);
+
+  if (!mappedStatus) {
+    logger.warn('Unknown WhatsApp message status, skipping', { status: status.status });
+    return;
+  }
+
+  logger.info('Message status update received', {
+    messageId: status.id,
+    status: status.status,
+    recipient: status.recipient_id,
+    timestamp: status.timestamp,
+  });
+
+  const errorCode = status.errors?.[0]?.code?.toString();
+  const errorMessage = status.errors?.[0]?.title;
+
+  const message = await messageRepo.updateStatusByWhatsAppMessageId(
+    status.id,
+    mappedStatus,
+    errorCode,
+    errorMessage,
+  );
+
+  if (!message) {
+    logger.warn('Message not found for WhatsApp message ID', { whatsappMessageId: status.id });
+    return;
+  }
+
+  if (message.campaignId) {
+    if (mappedStatus === 'delivered') {
+      await campaignRepo.incrementDeliveredCount(message.campaignId);
+    } else if (mappedStatus === 'read') {
+      await campaignRepo.incrementReadCount(message.campaignId);
+    } else if (mappedStatus === 'failed') {
+      await campaignRepo.incrementFailedCount(message.campaignId);
+    }
+  }
+};
+
+const processWebhookChange = async (
+  entryId: string,
+  changeValue: WebhookChangeValue,
+  whatsAppTemplateService: WhatsAppTemplateService,
+): Promise<void> => {
+  if (changeValue.event === 'message_template_status_update') {
+    const templateStatus = changeValue.status || 'PENDING';
+    logger.info('Template status update received', {
+      templateId: changeValue.message_template_id,
+      templateName: changeValue.message_template_name,
+      status: templateStatus,
+      rejectionReason: changeValue.rejection_reason,
+    });
+
+    try {
+      await whatsAppTemplateService.handleTemplateStatusUpdate({
+        whatsappTemplateId: changeValue.message_template_id || '',
+        status: templateStatus as Parameters<
+          typeof whatsAppTemplateService.handleTemplateStatusUpdate
+        >[0]['status'],
+        rejectionReason: changeValue.rejection_reason || undefined,
+      });
+    } catch (templateError) {
+      logger.error('Error processing template status update:', templateError);
+    }
+
+    return;
+  }
+
+  const phoneNumberId = changeValue.metadata?.phone_number_id || 'unknown';
+  const messageIds = changeValue.messages?.map((m) => m.id).join(',') || 'no-messages';
+  const statusIds = changeValue.statuses?.map((s) => s.id).join(',') || 'no-statuses';
+  const webhookId = `${entryId}-${phoneNumberId}-${messageIds}-${statusIds}`;
+
+  const existing = await webhookEventRepo.findByExternalId(webhookId);
+  if (existing) {
+    logger.info('Duplicate webhook detected, skipping', { webhookId });
+    return;
+  }
+
+  const webhookEvent = await webhookEventRepo.create({
+    externalId: webhookId,
+    eventType: 'message_status',
+    payload: changeValue as unknown as Prisma.InputJsonValue,
+    processed: false,
+    receivedAt: new Date(),
+  });
+
+  try {
+    await Promise.all((changeValue.statuses ?? []).map(processStatusUpdate));
+
+    if (changeValue.messages) {
+      changeValue.messages.forEach((msg) => {
+        logger.info('Incoming message received', {
+          messageId: msg.id,
+          from: msg.from,
+          type: msg.type,
+          body: msg.text?.body,
+        });
+      });
+    }
+
+    await webhookEventRepo.markAsProcessed(webhookEvent.id);
+  } catch (processError) {
+    const errMsg = processError instanceof Error ? processError.message : 'Unknown error';
+    logger.error('Error processing webhook change', { webhookId, error: processError });
+    await webhookEventRepo.markAsFailed(webhookEvent.id, errMsg);
+  }
+};
 
 /**
  * @swagger
@@ -53,7 +202,6 @@ export const verifyWebhook = async (req: Request, res: Response): Promise<void> 
   try {
     const whatsappConfig = getWhatsAppConfig();
     logger.info('Received webhook verification request', { query: req.query });
-    // Validate query parameters
     const { error, value } = webhookVerificationSchema.validate(req.query);
 
     if (error) {
@@ -64,7 +212,6 @@ export const verifyWebhook = async (req: Request, res: Response): Promise<void> 
     const token = value['hub.verify_token'];
     const challenge = value['hub.challenge'];
 
-    // Verify token matches configured token
     if (mode === 'subscribe' && token === whatsappConfig.webhookVerifyToken) {
       logger.info('Webhook verified successfully');
       res.status(200).send(challenge);
@@ -105,138 +252,41 @@ export const verifyWebhook = async (req: Request, res: Response): Promise<void> 
 export const handleWebhookEvent = async (req: Request, res: Response): Promise<void> => {
   try {
     const whatsAppTemplateService = new WhatsAppTemplateService();
-    
-    // Verify webhook signature
+
     const signature = req.headers['x-hub-signature-256'] as string;
-    // Use the raw body captured by captureRawBody middleware
     const rawBody = (req as Request & { rawBody?: string }).rawBody || JSON.stringify(req.body);
 
     if (!verifyWebhookSignature(signature, rawBody)) {
       logger.warn('Webhook signature verification failed', {
         signature: signature ? 'provided' : 'missing',
       });
-      // Return 200 to avoid WhatsApp retrying, but log as error
       res.status(200).json({ success: false, error: 'Invalid signature' });
       return;
     }
 
-    // Validate webhook payload
     const { error, value } = webhookEventSchema.validate(req.body);
 
     if (error) {
       logger.warn('Invalid webhook payload', { error: error.message });
-      // Return 200 to avoid WhatsApp retrying
       res.status(200).json({ success: false, error: 'Invalid payload' });
       return;
     }
 
-    // Process each entry in the webhook
-    const { entry } = value;
+    const { entry } = value as { entry: WebhookEntry[] };
 
-    entry.forEach((entryItem: {
-      id: string;
-      changes: Array<{
-        value: {
-          event?: string;
-          message_template_id?: string;
-          message_template_name?: string;
-          status?: string;
-          rejection_reason?: string;
-          metadata?: { phone_number_id: string };
-          messages?: Array<{ id: string; from: string; type: string; text?: { body: string } }>;
-          statuses?: Array<{
-            id: string;
-            status: string;
-            timestamp: string;
-            recipient_id: string;
-          }>;
-        };
-      }>;
-    }) => {
-      entryItem.changes.forEach(async (change) => {
-        const { value: changeValue } = change;
+    await Promise.all(
+      entry.map((entryItem) => Promise.all(
+        entryItem.changes.map((change) => processWebhookChange(
+          entryItem.id,
+          change.value,
+          whatsAppTemplateService,
+        )),
+      )),
+    );
 
-        // Handle template status updates
-        if (changeValue.event === 'message_template_status_update') {
-          const templateId = changeValue.message_template_id;
-          const templateName = changeValue.message_template_name;
-          const status = changeValue.status || 'PENDING';
-          const rejectionReason = changeValue.rejection_reason;
-
-          logger.info('Template status update received', {
-            templateId,
-            templateName,
-            status,
-            rejectionReason,
-          });
-
-          try {
-            await whatsAppTemplateService.handleTemplateStatusUpdate({
-              whatsappTemplateId: templateId || '',
-              status: status as any,
-              rejectionReason: rejectionReason || undefined,
-            });
-          } catch (templateError) {
-            logger.error('Error processing template status update:', templateError);
-          }
-
-          return; // Don't process as regular message/status webhook
-        }
-
-        const phoneNumberId = changeValue.metadata?.phone_number_id || 'unknown';
-        const messageIds = changeValue.messages && changeValue.messages.length > 0
-          ? changeValue.messages.map((message) => message.id).join(',')
-          : 'no-messages';
-        const statusIds = changeValue.statuses && changeValue.statuses.length > 0
-          ? changeValue.statuses.map((status) => status.id).join(',')
-          : 'no-statuses';
-        const webhookId = `${entryItem.id}-${phoneNumberId}-${messageIds}-${statusIds}`;
-
-        // Check for duplicate webhook (idempotency)
-        if (isWebhookProcessed(webhookId)) {
-          logger.info('Duplicate webhook detected, skipping', { webhookId });
-          return;
-        }
-
-        markWebhookAsProcessed(webhookId);
-
-        // Handle message status updates
-        if (changeValue.statuses && changeValue.statuses.length > 0) {
-          changeValue.statuses.forEach((status) => {
-            logger.info('Message status update received', {
-              messageId: status.id,
-              status: status.status,
-              recipient: status.recipient_id,
-              timestamp: status.timestamp,
-            });
-
-            // In production, update message status in database
-            // Example: await updateMessageStatus(status.id, status.status);
-          });
-        }
-
-        // Handle incoming messages
-        if (changeValue.messages && changeValue.messages.length > 0) {
-          changeValue.messages.forEach((message) => {
-            logger.info('Incoming message received', {
-              messageId: message.id,
-              from: message.from,
-              type: message.type,
-              body: message.text?.body,
-            });
-
-            // In production, process incoming message (e.g., opt-out requests)
-            // Example: await handleIncomingMessage(message);
-          });
-        }
-      });
-    });
-
-    // WhatsApp requires a 200 response within 20 seconds
     res.status(200).json({ success: true });
   } catch (error) {
     logger.error('Webhook event handling error', { error });
-    // Still return 200 to avoid retries from WhatsApp
     res.status(200).json({ success: false });
   }
 };
