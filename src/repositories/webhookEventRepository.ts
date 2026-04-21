@@ -101,6 +101,12 @@ export class WebhookEventRepository extends BaseRepository<WebhookEvent> {
     });
   }
 
+  async findByExternalId(externalId: string): Promise<WebhookEvent | null> {
+    return this.prisma.webhookEvent.findUnique({
+      where: { externalId },
+    });
+  }
+
   async findByMessageId(messageId: string): Promise<WebhookEvent[]> {
     return this.prisma.webhookEvent.findMany({
       where: { messageId },

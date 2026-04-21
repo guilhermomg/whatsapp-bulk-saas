@@ -7,8 +7,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // Enums
@@ -233,6 +234,7 @@ model Message {
 
 model WebhookEvent {
   id           String    @id @default(uuid())
+  externalId   String?   @unique @map("external_id")
   userId       String?   @map("user_id")
   eventType    String    @map("event_type")
   payload      Json      @db.JsonB
