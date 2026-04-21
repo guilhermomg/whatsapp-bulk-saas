@@ -227,7 +227,7 @@ export async function sendPasswordResetEmail(
     return;
   }
 
-  const resetUrl = `${config.app.frontendUrl}/reset-password?token=${resetToken}`;
+  const resetUrl = `${config.app.frontendUrl}/auth/reset-password?token=${resetToken}`;
 
   const mailOptions = {
     from: config.email.from,
