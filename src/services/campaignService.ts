@@ -1,6 +1,7 @@
-import { Campaign, CampaignStatus, Prisma } from '@prisma/client';
+import { Campaign, CampaignStatus, Contact, Prisma } from '@prisma/client';
 import { CampaignRepository } from '../repositories/campaignRepository';
 import { ContactRepository } from '../repositories/contactRepository';
+import { MessageRepository } from '../repositories/messageRepository';
 import { TemplateRepository } from '../repositories/templateRepository';
 import {
   BadRequestError,
@@ -8,7 +9,9 @@ import {
   ForbiddenError,
 } from '../utils/errors';
 import { SENDABLE_TEMPLATE_STATUSES } from './templateService';
+import WhatsAppClient from './whatsapp/whatsappClient';
 import campaignQueue from '../queues/campaignQueue';
+import prisma from '../utils/prisma';
 import logger from '../config/logger';
 
 export interface ContactFilter {
@@ -19,6 +22,7 @@ export interface CreateCampaignData {
   name: string;
   templateId: string;
   contactFilter?: ContactFilter;
+  contactIds?: string[];
   scheduledAt?: Date;
 }
 
@@ -26,6 +30,7 @@ export interface UpdateCampaignData {
   name?: string;
   templateId?: string;
   contactFilter?: ContactFilter;
+  contactIds?: string[];
   scheduledAt?: Date;
 }
 
@@ -46,14 +51,83 @@ export class CampaignService {
 
   private templateRepo: TemplateRepository;
 
+  private messageRepo: MessageRepository;
+
   constructor(
     campaignRepo = new CampaignRepository(),
     contactRepo = new ContactRepository(),
     templateRepo = new TemplateRepository(),
+    messageRepo = new MessageRepository(),
   ) {
     this.campaignRepo = campaignRepo;
     this.contactRepo = contactRepo;
     this.templateRepo = templateRepo;
+    this.messageRepo = messageRepo;
+  }
+
+  private async runSynchronously(
+    campaignId: string,
+    userId: string,
+    contacts: Contact[],
+    templateId: string,
+  ): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      await this.campaignRepo.updateStatus(campaignId, 'failed', 'User not found');
+      return;
+    }
+
+    const template = await this.templateRepo.findById(templateId);
+    if (!template) {
+      await this.campaignRepo.updateStatus(campaignId, 'failed', 'Template not found');
+      return;
+    }
+
+    const whatsapp = new WhatsAppClient(user);
+
+    for (const contact of contacts) {
+      try {
+        const response = await whatsapp.sendTemplateMessage({
+          to: contact.phone,
+          templateName: template.name,
+          languageCode: template.language,
+        });
+
+        await this.messageRepo.create({
+          campaign: { connect: { id: campaignId } },
+          contact: { connect: { id: contact.id } },
+          user: { connect: { id: userId } },
+          whatsappMessageId: response.messages[0]?.id,
+          direction: 'outbound',
+          type: 'template',
+          content: { templateId, templateName: template.name },
+          status: 'sent',
+          sentAt: new Date(),
+        });
+
+        await this.campaignRepo.incrementSentCount(campaignId);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logger.error('Failed to send campaign message', { campaignId, contactId: contact.id, errorMessage });
+
+        await this.messageRepo.create({
+          campaign: { connect: { id: campaignId } },
+          contact: { connect: { id: contact.id } },
+          user: { connect: { id: userId } },
+          direction: 'outbound',
+          type: 'template',
+          content: { templateId, templateName: template.name },
+          status: 'failed',
+          failedAt: new Date(),
+          errorMessage,
+        });
+
+        await this.campaignRepo.incrementFailedCount(campaignId);
+      }
+    }
+
+    await this.campaignRepo.updateStatus(campaignId, 'completed');
+    logger.info('Campaign completed (sync)', { campaignId, userId, total: contacts.length });
   }
 
   async createCampaign(userId: string, data: CreateCampaignData): Promise<Campaign> {
@@ -78,6 +152,7 @@ export class CampaignService {
       messageType: 'template',
       messageContent: {
         contactFilter: data.contactFilter ?? {},
+        ...(data.contactIds && { contactIds: data.contactIds }),
       } as unknown as Prisma.InputJsonValue,
       scheduledAt: data.scheduledAt,
       user: { connect: { id: userId } },
@@ -161,11 +236,12 @@ export class CampaignService {
     if (data.scheduledAt !== undefined) updateData.scheduledAt = data.scheduledAt;
     if (data.templateId) updateData.template = { connect: { id: data.templateId } };
 
-    if (data.contactFilter !== undefined) {
+    if (data.contactFilter !== undefined || data.contactIds !== undefined) {
       const existing = campaign.messageContent as Record<string, unknown>;
       updateData.messageContent = {
         ...existing,
-        contactFilter: data.contactFilter,
+        ...(data.contactFilter !== undefined && { contactFilter: data.contactFilter }),
+        ...(data.contactIds !== undefined && { contactIds: data.contactIds }),
       } as unknown as Prisma.InputJsonValue;
     }
 
@@ -199,40 +275,52 @@ export class CampaignService {
     }
 
     const messageContent = campaign.messageContent as Record<string, unknown>;
+    const contactIds = messageContent?.contactIds as string[] | undefined;
     const contactFilter = (messageContent?.contactFilter ?? {}) as ContactFilter;
 
-    const contacts = await this.contactRepo.findByUserId(userId, {
-      optedIn: true,
-      tags: contactFilter.tags,
-    });
+    let contacts;
+    if (contactIds && contactIds.length > 0) {
+      contacts = await this.contactRepo.findByIds(contactIds, userId);
+    } else {
+      contacts = await this.contactRepo.findByUserId(userId, {
+        tags: contactFilter.tags,
+      });
+    }
 
     const activeContacts = contacts.filter((c) => !c.isBlocked);
 
     if (activeContacts.length === 0) {
-      throw new BadRequestError('No opted-in contacts available for this campaign');
+      throw new BadRequestError('No contacts available for this campaign');
     }
 
     await this.campaignRepo.updateStatus(campaignId, 'processing');
     await this.campaignRepo.update(campaignId, { totalRecipients: activeContacts.length });
 
-    // Enqueue jobs with batch pacing: every 50 jobs adds a 10-minute delay
-    const jobs = activeContacts.map((contact, index) => {
-      const batchIndex = Math.floor(index / BATCH_SIZE);
-      const delay = batchIndex * BATCH_COOLDOWN_MS;
+    if (campaignQueue) {
+      // Enqueue jobs with batch pacing: every 50 jobs adds a 10-minute delay
+      const jobs = activeContacts.map((contact, index) => {
+        const batchIndex = Math.floor(index / BATCH_SIZE);
+        const delay = batchIndex * BATCH_COOLDOWN_MS;
 
-      return campaignQueue.add(
-        `send-${campaignId}-${contact.id}`,
-        {
-          campaignId,
-          userId,
-          contactId: contact.id,
-          templateId: campaign.templateId!,
-        },
-        { delay },
+        return campaignQueue!.add(
+          `send-${campaignId}-${contact.id}`,
+          {
+            campaignId,
+            userId,
+            contactId: contact.id,
+            templateId: campaign.templateId!,
+          },
+          { delay },
+        );
+      });
+
+      await Promise.all(jobs);
+    } else {
+      // Run synchronously in the background when Redis is unavailable
+      this.runSynchronously(campaignId, userId, activeContacts, campaign.templateId!).catch(
+        (err) => logger.error('Sync campaign execution failed', { campaignId, error: err.message }),
       );
-    });
-
-    await Promise.all(jobs);
+    }
 
     logger.info('Campaign started', {
       campaignId,
@@ -263,7 +351,7 @@ export class CampaignService {
       throw new BadRequestError(`Campaign in status ${campaign.status} cannot be cancelled`);
     }
 
-    await campaignQueue.drain();
+    await campaignQueue?.drain();
     const updated = await this.campaignRepo.updateStatus(
       campaignId,
       'failed',

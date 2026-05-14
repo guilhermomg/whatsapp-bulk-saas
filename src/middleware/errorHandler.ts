@@ -18,8 +18,8 @@ const errorHandler = (
   let error: AppError | ErrorWithCode = { ...err };
   error.message = err.message;
 
-  // Log error
-  logger.error(`Error: ${err.message} | Request ID: ${req.id}`);
+  // Log error with stack for debugging
+  logger.error(`Error: ${err.message} | Request ID: ${req.id}`, { stack: err.stack });
 
   // Mongoose bad ObjectId
   if (err.name === 'CastError') {
@@ -52,7 +52,6 @@ const errorHandler = (
     success: false,
     error: error.message || 'Server Error',
     requestId: req.id,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 };
 

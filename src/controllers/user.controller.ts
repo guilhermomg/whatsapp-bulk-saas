@@ -198,7 +198,7 @@ export async function connectWhatsApp(
         `https://graph.facebook.com/${whatsappApiVersion}/${phoneNumberId}`,
         {
           params: {
-            fields: 'display_phone_number,verified_name,quality_rating,messaging_limit_tier',
+            fields: 'display_phone_number,verified_name,quality_rating,messaging_limit_tier,platform_type',
             access_token: accessToken,
           },
           timeout: 10000,
@@ -210,7 +210,14 @@ export async function connectWhatsApp(
         verified_name: verifiedName,
         quality_rating: qualityRating,
         messaging_limit_tier: messagingLimitTier,
+        platform_type: platformType,
       } = response.data;
+
+      if (platformType !== 'CLOUD_API') {
+        throw new BadRequestError(
+          'This phone number uses the on-premise WhatsApp API which is not supported. Please migrate to Cloud API in Meta Business Manager first.',
+        );
+      }
 
       // Check if phone number is already connected to another user
       const existingUser = await prisma.user.findFirst({

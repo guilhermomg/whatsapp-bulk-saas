@@ -87,6 +87,9 @@ export const webhookVerificationSchema = Joi.object({
   'hub.mode': Joi.string().valid('subscribe').required(),
   'hub.verify_token': Joi.string().required(),
   'hub.challenge': Joi.string().required(),
+  hub_mode: Joi.string().optional(),
+  hub_verify_token: Joi.string().optional(),
+  hub_challenge: Joi.string().optional(),
 });
 
 export const webhookEventSchema = Joi.object({

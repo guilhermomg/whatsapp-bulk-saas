@@ -96,6 +96,15 @@ export class ContactRepository extends BaseRepository<Contact> {
     });
   }
 
+  async findByIds(ids: string[], userId: string): Promise<Contact[]> {
+    return this.prisma.contact.findMany({
+      where: {
+        id: { in: ids },
+        userId,
+      },
+    });
+  }
+
   async bulkCreate(contacts: Prisma.ContactCreateManyInput[]): Promise<number> {
     const result = await this.prisma.contact.createMany({
       data: contacts,

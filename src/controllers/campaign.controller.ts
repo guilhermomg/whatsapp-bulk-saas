@@ -61,7 +61,7 @@ export async function createCampaign(req: Request, res: Response): Promise<void>
     if (!req.user) throw new UnauthorizedError();
 
     const {
-      name, templateId, contactFilter, scheduledAt,
+      name, templateId, contactFilter, contactIds, scheduledAt,
     } = req.body;
 
     if (!name) throw new BadRequestError('name is required');
@@ -71,6 +71,7 @@ export async function createCampaign(req: Request, res: Response): Promise<void>
       name,
       templateId,
       contactFilter,
+      contactIds,
       scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
     });
 
@@ -223,13 +224,14 @@ export async function updateCampaign(req: Request, res: Response): Promise<void>
 
     const { id } = req.params;
     const {
-      name, templateId, contactFilter, scheduledAt,
+      name, templateId, contactFilter, contactIds, scheduledAt,
     } = req.body;
 
     const campaign = await campaignService.updateCampaign(id, req.user.userId, {
       name,
       templateId,
       contactFilter,
+      contactIds,
       scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
     });
 

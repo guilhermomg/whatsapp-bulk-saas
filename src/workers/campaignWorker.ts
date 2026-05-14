@@ -28,7 +28,6 @@ async function processJob(job: Job<CampaignJobData>): Promise<void> {
     return;
   }
 
-  // Use prisma directly to get encrypted accessToken (WhatsAppClient decrypts it)
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
     logger.warn('User not found for campaign job', { userId, campaignId });
@@ -77,9 +76,9 @@ async function processJob(job: Job<CampaignJobData>): Promise<void> {
   } catch (error) {
     if (error instanceof WhatsAppRateLimitError) {
       logger.warn('WhatsApp rate limit hit, pausing queue for 30s', { campaignId });
-      await campaignQueue.pause();
+      await campaignQueue!.pause();
       setTimeout(async () => {
-        await campaignQueue.resume();
+        await campaignQueue!.resume();
         logger.info('Campaign queue resumed after rate limit cooldown');
       }, RATE_LIMIT_PAUSE_MS);
       throw error;
@@ -114,25 +113,29 @@ async function processJob(job: Job<CampaignJobData>): Promise<void> {
   }
 }
 
-const worker = new Worker<CampaignJobData>(
-  'campaign-messages',
-  processJob,
-  {
-    connection: redisConnection,
-    limiter: {
-      max: 1,
-      duration: 4000,
-    },
-    concurrency: 1,
-  },
-);
+let worker: Worker<CampaignJobData> | null = null;
 
-worker.on('failed', (job, err) => {
-  logger.error('Campaign job failed permanently', {
-    jobId: job?.id,
-    campaignId: job?.data.campaignId,
-    error: err.message,
+if (redisConnection) {
+  worker = new Worker<CampaignJobData>(
+    'campaign-messages',
+    processJob,
+    {
+      connection: redisConnection,
+      limiter: {
+        max: 1,
+        duration: 4000,
+      },
+      concurrency: 1,
+    },
+  );
+
+  worker.on('failed', (job, err) => {
+    logger.error('Campaign job failed permanently', {
+      jobId: job?.id,
+      campaignId: job?.data.campaignId,
+      error: err.message,
+    });
   });
-});
+}
 
 export default worker;

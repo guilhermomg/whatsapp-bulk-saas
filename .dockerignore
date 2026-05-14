@@ -14,3 +14,20 @@ coverage
 README.md
 .vscode
 .DS_Store
+# Build artifacts (rebuilt inside Docker)
+dist
+# Test and dev files not needed in image
+tests
+jest.config.js
+nodemon.json
+tsconfig.eslint.json
+# Deployment / docs
+railway.json
+nixpacks.toml
+docs
+*.md
+on-premise-api-migration.md
+# Misc
+.claude
+test.txt
+app-logs.zip

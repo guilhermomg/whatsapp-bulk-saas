@@ -8,17 +8,21 @@ export interface CampaignJobData {
   templateId: string;
 }
 
-const campaignQueue = new Queue<CampaignJobData>('campaign-messages', {
-  connection: redisConnection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 5000,
+let campaignQueue: Queue<CampaignJobData> | null = null;
+
+if (redisConnection) {
+  campaignQueue = new Queue<CampaignJobData>('campaign-messages', {
+    connection: redisConnection,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: 'exponential',
+        delay: 5000,
+      },
+      removeOnComplete: 1000,
+      removeOnFail: 500,
     },
-    removeOnComplete: 1000,
-    removeOnFail: 500,
-  },
-});
+  });
+}
 
 export default campaignQueue;
